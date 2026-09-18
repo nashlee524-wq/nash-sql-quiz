@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Nash SQL 積木練習</title>
+<style>
+:root{--bg:#f5f7fb;--card:#fff;--ink:#172033;--muted:#6b7280;--line:#dbe2ea;--ok:#e9f8ef;--bad:#fff0f0;--accent:#1f2937}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif}
+.wrap{max-width:760px;margin:auto;padding:18px 14px 40px}
+h1{font-size:25px;margin:8px 0 4px}.sub{color:var(--muted);margin-bottom:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:0 6px 24px rgba(0,0,0,.05)}
+.meta{display:flex;justify-content:space-between;color:var(--muted);font-size:14px}
+.q{font-size:19px;font-weight:700;line-height:1.5;margin:14px 0}
+.label{font-size:13px;color:var(--muted);margin:14px 0 7px}
+.answer{min-height:76px;border:2px dashed #aeb8c6;border-radius:14px;padding:10px;display:flex;gap:8px;flex-wrap:wrap;align-content:flex-start}
+.pool{display:flex;gap:9px;flex-wrap:wrap}
+.token{border:1px solid #cbd5e1;background:#fff;border-radius:11px;padding:10px 12px;font-size:16px;font-weight:650;box-shadow:0 2px 5px rgba(0,0,0,.04);touch-action:manipulation}
+.token.used{opacity:.35}.answer .token{background:#eef2f7}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:15px}
+button.action{border:0;border-radius:12px;padding:13px;font-size:16px;font-weight:700}
+.check{background:var(--accent);color:#fff}.clear{background:#e8edf3;color:#243044}.next{background:#dff4e7;color:#155b31;grid-column:1/-1;display:none}
+.result{margin-top:13px;border-radius:12px;padding:12px;display:none;line-height:1.55}
+.result.ok{display:block;background:var(--ok);color:#155b31}.result.bad{display:block;background:var(--bad);color:#8a2020}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.tip{margin-top:16px;color:var(--muted);font-size:13px;line-height:1.55}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🧩 Nash SQL 積木練習</h1>
+  <div class="sub">不用打整段 SQL。依正確順序點積木，把指令組起來。</div>
+  <div class="card">
+    <div class="meta"><span id="progress"></span><span id="score"></span></div>
+    <div class="q" id="question"></div>
+
+    <div class="label">你的 SQL</div>
+    <div class="answer" id="answer"></div>
+
+    <div class="label">可用積木</div>
+    <div class="pool" id="pool"></div>
+
+    <div class="actions">
+      <button class="action clear" id="clear">清除重組</button>
+      <button class="action check" id="check">送出答案</button>
+      <button class="action" id="showAnswer" style="background:#fff3cd;color:#725b00">顯示解答</button>
+<button class="action" id="retry" style="background:#e8edf3;color:#243044">本題重做</button>
+<button class="action next" id="next">下一題 →</button>
+<button class="action" id="wrongOnly" style="background:#fde8e8;color:#8a2020;grid-column:1/-1">錯題重做</button>
+<button class="action" id="resetAll" style="background:#f0f0f0;color:#333;grid-column:1/-1">重置全部進度</button>
+    </div>
+    <div class="result" id="result"></div>
+    <div class="tip">點「你的 SQL」裡的積木可以退回。題目會混入干擾積木，不是每一顆都要用。</div>
+  </div>
+</div>
+
+<script>
+const qs = [
+ {q:"查詢 member 資料表的所有資料。", a:["SELECT","*","FROM","member"], x:["WHERE","DELETE"]},
+ {q:"查詢 watsta 中 type = 'B' 的所有資料。", a:["SELECT","*","FROM","watsta","WHERE","type","=","'B'"], x:["ORDER BY","DELETE","AND"]},
+ {q:"查詢 SQL Server 中名稱為 tmpLabel_2 的物件，確認它是 Table、View 還是預存程序。", a:["SELECT","name, type, type_desc","FROM","sys.objects","WHERE","name","=","'tmpLabel_2'"], x:["sys.databases","DELETE","ORDER BY"]},
+ {q:"查出目前連到 BAIFU0811 的連線，而且排除自己目前的連線。", a:["SELECT","*","FROM","sys.sysprocesses","WHERE","DB_NAME(dbid)","=","'BAIFU0811'","AND","spid","<>","@@SPID"], x:["KILL","sys.objects","OR"]},
+ {q:"查詢 v_Report_Rpt_INC1F0，條件是 accno_no = '00047994'。", a:["SELECT","*","FROM","v_Report_Rpt_INC1F0","WHERE","accno_no","=","'00047994'"], x:["BETWEEN","DELETE","@@SPID"]},
+ {q:"查詢 watsta 的資料，並依 batchno 排序。", a:["SELECT","*","FROM","watsta","ORDER BY","batchno"], x:["WHERE","KILL","GROUP BY"]}
+];
+let i=0, correct=0, chosen=[], wrong=new Set();
+const $=id=>document.getElementById(id);
+function shuffled(a){return [...a].sort(()=>Math.random()-.5)}
+function render(){
+ chosen=[]; $("result").className="result"; $("result").innerHTML=""; $("next").style.display="none";
+ $("progress").textContent=`第 ${i+1} / ${qs.length} 題`; $("score").textContent=`答對 ${correct}｜錯題 ${wrong.size}`;
+ $("question").textContent=qs[i].q; $("answer").innerHTML="";
+ const tokens=shuffled([...qs[i].a,...qs[i].x].map((t,n)=>({t,id:n+"_"+Math.random()})));
+ $("pool").innerHTML="";
+ tokens.forEach(o=>{
+   const b=document.createElement("button"); b.className="token"; b.textContent=o.t; b.dataset.val=o.t;
+   b.onclick=()=>{ if(b.classList.contains("used")) return; b.classList.add("used"); chosen.push({val:o.t,el:b}); renderAnswer(); };
+   $("pool").appendChild(b);
+ });
+}
+function renderAnswer(){
+ $("answer").innerHTML="";
+ chosen.forEach((o,idx)=>{
+   const b=document.createElement("button"); b.className="token"; b.textContent=o.val;
+   b.onclick=()=>{o.el.classList.remove("used"); chosen.splice(idx,1); renderAnswer();};
+   $("answer").appendChild(b);
+ });
+}
+$("clear").onclick=()=>{chosen.forEach(o=>o.el.classList.remove("used"));chosen=[];renderAnswer();$("result").className="result";$("next").style.display="none"};
+$("check").onclick=()=>{
+ const got=chosen.map(o=>o.val), want=qs[i].a;
+ const ok=got.length===want.length && got.every((v,n)=>v===want[n]);
+ if(ok){
+   correct++; $("score").textContent=`答對 ${correct} 題`;
+   $("result").className="result ok";
+   $("result").innerHTML=`✅ 正確！<br><code>${want.join(" ")}</code>`;
+   $("next").style.display="block";
+ } else {
+   wrong.add(i); $("score").textContent=`答對 ${correct}｜錯題 ${wrong.size}`;
+   $("result").className="result bad";
+   $("result").innerHTML=`❌ 還不對。可繼續調整、按「本題重做」，或直接看解答。`;
+ }
+};
+$("next").onclick=()=>{i++; if(i>=qs.length){i=0; alert(`完成一輪！你答對 ${correct} 題。再跑一輪會重新打亂積木。`); correct=0;} render();};
+
+$("retry").onclick=()=>{$("clear").click();};
+$("showAnswer").onclick=()=>{wrong.add(i); $("score").textContent=`答對 ${correct}｜錯題 ${wrong.size}`; $("result").className="result ok"; $("result").innerHTML=`💡 正確解答：<br><code>${qs[i].a.join(" ")}</code>`;};
+$("wrongOnly").onclick=()=>{if(wrong.size===0){alert("目前沒有錯題 👍");return;} const first=[...wrong][0]; i=first; correct=0; render();};
+$("resetAll").onclick=()=>{i=0;correct=0;wrong.clear();render();};
+render();
+</script>
+</body>
+</html>
