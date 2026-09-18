@@ -58,21 +58,21 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 <script>
 const qs = [
  {q:"查詢 member 資料表的所有資料。", a:["SELECT","*","FROM","member"], x:["WHERE","DELETE"]},
- {q:"查詢 watsta 中 type = 'B' 的所有資料。", a:["SELECT","*","FROM","watsta","WHERE","type","=","'B'"], x:["ORDER BY","DELETE","AND"]},
- {q:"查詢 SQL Server 中名稱為 tmpLabel_2 的物件，確認它是 Table、View 還是預存程序。", a:["SELECT","name, type, type_desc","FROM","sys.objects","WHERE","name","=","'tmpLabel_2'"], x:["sys.databases","DELETE","ORDER BY"]},
- {q:"查出目前連到 BAIFU0811 的連線，而且排除自己目前的連線。", a:["SELECT","*","FROM","sys.sysprocesses","WHERE","DB_NAME(dbid)","=","'BAIFU0811'","AND","spid","<>","@@SPID"], x:["KILL","sys.objects","OR"]},
- {q:"查詢 v_Report_Rpt_INC1F0，條件是 accno_no = '00047994'。", a:["SELECT","*","FROM","v_Report_Rpt_INC1F0","WHERE","accno_no","=","'00047994'"], x:["BETWEEN","DELETE","@@SPID"]},
- {q:"查詢 watsta 的資料，並依 batchno 排序。", a:["SELECT","*","FROM","watsta","ORDER BY","batchno"], x:["WHERE","KILL","GROUP BY"]},
- {q:"查詢 ljm_body_light 中年度 yea = '2027' 的所有資料。", a:["SELECT","*","FROM","ljm_body_light","WHERE","yea","=","'2027'"], x:["DELETE","ORDER BY","@@SPID"]},
- {q:"查詢 watsta 中 type = 'B'，並依 batchno 排序。", a:["SELECT","*","FROM","watsta","WHERE","type","=","'B'","ORDER BY","batchno"], x:["DELETE","GROUP BY","OR"]},
+ {q:"查詢 SampleOrders 中 type = 'B' 的所有資料。", a:["SELECT","*","FROM","SampleOrders","WHERE","type","=","'B'"], x:["ORDER BY","DELETE","AND"]},
+ {q:"查詢 SQL Server 中名稱為 SampleObject 的物件，確認它是 Table、View 還是預存程序。", a:["SELECT","name, type, type_desc","FROM","sys.objects","WHERE","name","=","'SampleObject'"], x:["sys.databases","DELETE","ORDER BY"]},
+ {q:"查出目前連到 SampleDB 的連線，而且排除自己目前的連線。", a:["SELECT","*","FROM","sys.sysprocesses","WHERE","DB_NAME(dbid)","=","'SampleDB'","AND","spid","<>","@@SPID"], x:["KILL","sys.objects","OR"]},
+ {q:"查詢 SampleReportView，條件是 reference_no = '00047994'。", a:["SELECT","*","FROM","SampleReportView","WHERE","reference_no","=","'00047994'"], x:["BETWEEN","DELETE","@@SPID"]},
+ {q:"查詢 SampleOrders 的資料，並依 batch_no 排序。", a:["SELECT","*","FROM","SampleOrders","ORDER BY","batch_no"], x:["WHERE","KILL","GROUP BY"]},
+ {q:"查詢 SampleRecords 中年度 year_code = '2027' 的所有資料。", a:["SELECT","*","FROM","SampleRecords","WHERE","year_code","=","'2027'"], x:["DELETE","ORDER BY","@@SPID"]},
+ {q:"查詢 SampleOrders 中 type = 'B'，並依 batch_no 排序。", a:["SELECT","*","FROM","SampleOrders","WHERE","type","=","'B'","ORDER BY","batch_no"], x:["DELETE","GROUP BY","OR"]},
  {q:"查詢 SQL Server 目前資料庫的 Collation。", a:["SELECT","DATABASEPROPERTYEX(DB_NAME(), 'Collation')","AS","DatabaseCollation"], x:["FROM","sys.objects","KILL"]},
- {q:"查詢 INFORMATION_SCHEMA.COLUMNS 中 watsta 資料表的 type 欄位。", a:["SELECT","TABLE_NAME, COLUMN_NAME, COLLATION_NAME","FROM","INFORMATION_SCHEMA.COLUMNS","WHERE","TABLE_NAME","=","'watsta'","AND","COLUMN_NAME","=","'type'"], x:["sys.sysprocesses","DELETE","OR"]},
- {q:"查詢 ljm_body_light 中 isTaishen = 1 的資料。", a:["SELECT","*","FROM","ljm_body_light","WHERE","isTaishen","=","1"], x:["KILL","ORDER BY","<>"]},
- {q:"查詢 watsta 中 type = 'B' 且 batchno = '001' 的資料。", a:["SELECT","*","FROM","watsta","WHERE","type","=","'B'","AND","batchno","=","'001'"], x:["OR","DELETE","GROUP BY"]},
- {q:"查詢 BAIFU0811 的連線資訊，只顯示 spid、status、hostname。", a:["SELECT","spid, status, hostname","FROM","sys.sysprocesses","WHERE","DB_NAME(dbid)","=","'BAIFU0811'"], x:["sys.objects","DELETE","ORDER BY"]},
+ {q:"查詢 INFORMATION_SCHEMA.COLUMNS 中 SampleOrders 資料表的 type 欄位。", a:["SELECT","TABLE_NAME, COLUMN_NAME, COLLATION_NAME","FROM","INFORMATION_SCHEMA.COLUMNS","WHERE","TABLE_NAME","=","'SampleOrders'","AND","COLUMN_NAME","=","'type'"], x:["sys.sysprocesses","DELETE","OR"]},
+ {q:"查詢 SampleRecords 中 is_active = 1 的資料。", a:["SELECT","*","FROM","SampleRecords","WHERE","is_active","=","1"], x:["KILL","ORDER BY","<>"]},
+ {q:"查詢 SampleOrders 中 type = 'B' 且 batch_no = '001' 的資料。", a:["SELECT","*","FROM","SampleOrders","WHERE","type","=","'B'","AND","batch_no","=","'001'"], x:["OR","DELETE","GROUP BY"]},
+ {q:"查詢 SampleDB 的連線資訊，只顯示 spid、status、hostname。", a:["SELECT","spid, status, hostname","FROM","sys.sysprocesses","WHERE","DB_NAME(dbid)","=","'SampleDB'"], x:["sys.objects","DELETE","ORDER BY"]},
  {q:"查詢 sys.objects 中所有 VIEW 物件。", a:["SELECT","name, type_desc","FROM","sys.objects","WHERE","type","=","'V'"], x:["KILL","sys.databases","@@SPID"]},
- {q:"查詢 ljm_body_light 中 armamt 大於 1000 的資料。", a:["SELECT","*","FROM","ljm_body_light","WHERE","armamt",">","1000"], x:["<","DELETE","GROUP BY"]},
- {q:"查詢 watsta 中 type 是 B 或 C 的資料。", a:["SELECT","*","FROM","watsta","WHERE","type","IN","('B','C')"], x:["BETWEEN","DELETE","AND"]}
+ {q:"查詢 SampleRecords 中 amount 大於 1000 的資料。", a:["SELECT","*","FROM","SampleRecords","WHERE","amount",">","1000"], x:["<","DELETE","GROUP BY"]},
+ {q:"查詢 SampleOrders 中 type 是 B 或 C 的資料。", a:["SELECT","*","FROM","SampleOrders","WHERE","type","IN","('B','C')"], x:["BETWEEN","DELETE","AND"]}
 ];
 let i=0, correct=0, chosen=[], wrong=new Set();
 const $=id=>document.getElementById(id);
