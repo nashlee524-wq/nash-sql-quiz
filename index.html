@@ -72,7 +72,17 @@ const qs = [
  {q:"查詢 SampleDB 的連線資訊，只顯示 spid、status、hostname。", a:["SELECT","spid, status, hostname","FROM","sys.sysprocesses","WHERE","DB_NAME(dbid)","=","'SampleDB'"], x:["sys.objects","DELETE","ORDER BY"]},
  {q:"查詢 sys.objects 中所有 VIEW 物件。", a:["SELECT","name, type_desc","FROM","sys.objects","WHERE","type","=","'V'"], x:["KILL","sys.databases","@@SPID"]},
  {q:"查詢 SampleRecords 中 amount 大於 1000 的資料。", a:["SELECT","*","FROM","SampleRecords","WHERE","amount",">","1000"], x:["<","DELETE","GROUP BY"]},
- {q:"查詢 SampleOrders 中 type 是 B 或 C 的資料。", a:["SELECT","*","FROM","SampleOrders","WHERE","type","IN","('B','C')"], x:["BETWEEN","DELETE","AND"]}
+ {q:"查詢 SampleOrders 中 type 是 B 或 C 的資料。", a:["SELECT","*","FROM","SampleOrders","WHERE","type","IN","('B','C')"], x:["BETWEEN","DELETE","AND"]},
+ {q:"查詢 StoreOrdersDopdta 與 StoreOrdersDophad，依 sysno、seq、ord_id 三個欄位做 INNER JOIN。", a:["SELECT","*","FROM","StoreOrdersDopdta","INNER JOIN","StoreOrdersDophad","ON","StoreOrdersDopdta.sysno = StoreOrdersDophad.sysno","AND","StoreOrdersDopdta.seq = StoreOrdersDophad.seq","AND","StoreOrdersDopdta.ord_id = StoreOrdersDophad.ord_id"], x:["LEFT JOIN","OR","ORDER BY"]},
+ {q:"查詢 v_Report_Rpt_INC1F0，條件 opendate 大於等於 2026/01/01，且 accno_no = '00047994'。", a:["SELECT","*","FROM","v_Report_Rpt_INC1F0","WHERE","opendate",">=","'2026/01/01'","AND","accno_no","=","'00047994'"], x:["accno_h + accno_no","OR","DELETE"]},
+ {q:"查詢 ljm_body_light 中是否太歲 isTaishen = 1，而且年度 yea = '2027'。", a:["SELECT","*","FROM","ljm_body_light","WHERE","isTaishen","=","1","AND","yea","=","'2027'"], x:["OR","ORDER BY","DELETE"]},
+ {q:"查詢 sys.objects 中名稱為 tmpLabel_2 的物件，顯示 name、type、type_desc。", a:["SELECT","name, type, type_desc","FROM","sys.objects","WHERE","name","=","'tmpLabel_2'"], x:["sys.sysprocesses","KILL","GROUP BY"]},
+ {q:"找出 SQL Server 程式碼中有引用 tmpLabel_2 的模組。", a:["SELECT","OBJECT_SCHEMA_NAME(object_id), OBJECT_NAME(object_id), definition","FROM","sys.sql_modules","WHERE","definition","LIKE","'%tmpLabel_2%'"], x:["sys.objects","=","DELETE"]},
+ {q:"查詢 watsta 中 type 為 B，而且 batchno 為 001 的資料。", a:["SELECT","*","FROM","watsta","WHERE","type","=","'B'","AND","batchno","=","'001'"], x:["OR","GROUP BY","KILL"]},
+ {q:"查詢資料庫 baifu0811 的連線，並排除目前自己的 SPID。", a:["SELECT","spid, status, hostname, program_name, loginame","FROM","sys.sysprocesses","WHERE","DB_NAME(dbid)","=","'baifu0811'","AND","spid","<>","@@SPID"], x:["sys.objects","OR","DELETE"]},
+ {q:"查詢 ljm_body_light 中 armamt 大於 1000，並依 armamt 由大到小排序。", a:["SELECT","*","FROM","ljm_body_light","WHERE","armamt",">","1000","ORDER BY","armamt","DESC"], x:["ASC","GROUP BY","DELETE"]},
+ {q:"查詢 watsta 中 type 為 B 或 C，使用 IN 寫法。", a:["SELECT","*","FROM","watsta","WHERE","type","IN","('B','C')"], x:["BETWEEN","AND","DELETE"]},
+ {q:"查詢目前資料庫的 Collation，欄位別名設為 DatabaseCollation。", a:["SELECT","DATABASEPROPERTYEX(DB_NAME(), 'Collation')","AS","DatabaseCollation"], x:["FROM","sys.objects","WHERE"]}
 ];
 let i=0, correct=0, chosen=[], wrong=new Set();
 const $=id=>document.getElementById(id);
