@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Nash SQL 積木練習</title>
+<title>Nash 技術積木練習</title>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--ink:#172033;--muted:#6b7280;--line:#dbe2ea;--ok:#e9f8ef;--bad:#fff0f0;--accent:#1f2937}
 *{box-sizing:border-box}
@@ -29,13 +29,13 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 </head>
 <body>
 <div class="wrap">
-  <h1>🧩 Nash SQL 積木練習</h1>
-  <div class="sub">不用打整段 SQL。依正確順序點積木，把指令組起來。</div>
+  <h1>🧩 Nash 技術積木練習</h1>
+  <div class="sub">SQL、VB.NET、PowerShell、IIS、Git、資安混合練習。依正確順序點積木完成答案。</div>
   <div class="card">
     <div class="meta"><span id="progress"></span><span id="score"></span></div>
     <div class="q" id="question"></div>
 
-    <div class="label">你的 SQL</div>
+    <div class="label">你的答案</div>
     <div class="answer" id="answer"></div>
 
     <div class="label">可用積木</div>
@@ -51,38 +51,22 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 <button class="action" id="resetAll" style="background:#f0f0f0;color:#333;grid-column:1/-1">重置全部進度</button>
     </div>
     <div class="result" id="result"></div>
-    <div class="tip">點「你的 SQL」裡的積木可以退回。題目會混入干擾積木，不是每一顆都要用。</div>
+    <div class="tip">點「你的答案」裡的積木可以退回。題目會混入干擾積木，不是每一顆都要用。</div>
   </div>
 </div>
 
 <script>
 const qs = [
- {q:"查詢 member 資料表的所有資料。", a:["SELECT","*","FROM","member"], x:["WHERE","DELETE"]},
- {q:"查詢 SampleOrders 中 type = 'B' 的所有資料。", a:["SELECT","*","FROM","SampleOrders","WHERE","type","=","'B'"], x:["ORDER BY","DELETE","AND"]},
- {q:"查詢 SQL Server 中名稱為 SampleObject 的物件，確認它是 Table、View 還是預存程序。", a:["SELECT","name, type, type_desc","FROM","sys.objects","WHERE","name","=","'SampleObject'"], x:["sys.databases","DELETE","ORDER BY"]},
- {q:"查出目前連到 SampleDB 的連線，而且排除自己目前的連線。", a:["SELECT","*","FROM","sys.sysprocesses","WHERE","DB_NAME(dbid)","=","'SampleDB'","AND","spid","<>","@@SPID"], x:["KILL","sys.objects","OR"]},
- {q:"查詢 SampleReportView，條件是 reference_no = '00047994'。", a:["SELECT","*","FROM","SampleReportView","WHERE","reference_no","=","'00047994'"], x:["BETWEEN","DELETE","@@SPID"]},
- {q:"查詢 SampleOrders 的資料，並依 batch_no 排序。", a:["SELECT","*","FROM","SampleOrders","ORDER BY","batch_no"], x:["WHERE","KILL","GROUP BY"]},
- {q:"查詢 SampleRecords 中年度 year_code = '2027' 的所有資料。", a:["SELECT","*","FROM","SampleRecords","WHERE","year_code","=","'2027'"], x:["DELETE","ORDER BY","@@SPID"]},
- {q:"查詢 SampleOrders 中 type = 'B'，並依 batch_no 排序。", a:["SELECT","*","FROM","SampleOrders","WHERE","type","=","'B'","ORDER BY","batch_no"], x:["DELETE","GROUP BY","OR"]},
- {q:"查詢 SQL Server 目前資料庫的 Collation。", a:["SELECT","DATABASEPROPERTYEX(DB_NAME(), 'Collation')","AS","DatabaseCollation"], x:["FROM","sys.objects","KILL"]},
- {q:"查詢 INFORMATION_SCHEMA.COLUMNS 中 SampleOrders 資料表的 type 欄位。", a:["SELECT","TABLE_NAME, COLUMN_NAME, COLLATION_NAME","FROM","INFORMATION_SCHEMA.COLUMNS","WHERE","TABLE_NAME","=","'SampleOrders'","AND","COLUMN_NAME","=","'type'"], x:["sys.sysprocesses","DELETE","OR"]},
- {q:"查詢 SampleRecords 中 is_active = 1 的資料。", a:["SELECT","*","FROM","SampleRecords","WHERE","is_active","=","1"], x:["KILL","ORDER BY","<>"]},
- {q:"查詢 SampleOrders 中 type = 'B' 且 batch_no = '001' 的資料。", a:["SELECT","*","FROM","SampleOrders","WHERE","type","=","'B'","AND","batch_no","=","'001'"], x:["OR","DELETE","GROUP BY"]},
- {q:"查詢 SampleDB 的連線資訊，只顯示 spid、status、hostname。", a:["SELECT","spid, status, hostname","FROM","sys.sysprocesses","WHERE","DB_NAME(dbid)","=","'SampleDB'"], x:["sys.objects","DELETE","ORDER BY"]},
- {q:"查詢 sys.objects 中所有 VIEW 物件。", a:["SELECT","name, type_desc","FROM","sys.objects","WHERE","type","=","'V'"], x:["KILL","sys.databases","@@SPID"]},
- {q:"查詢 SampleRecords 中 amount 大於 1000 的資料。", a:["SELECT","*","FROM","SampleRecords","WHERE","amount",">","1000"], x:["<","DELETE","GROUP BY"]},
- {q:"查詢 SampleOrders 中 type 是 B 或 C 的資料。", a:["SELECT","*","FROM","SampleOrders","WHERE","type","IN","('B','C')"], x:["BETWEEN","DELETE","AND"]},
- {q:"查詢 StoreOrdersDopdta 與 StoreOrdersDophad，依 sysno、seq、ord_id 三個欄位做 INNER JOIN。", a:["SELECT","*","FROM","StoreOrdersDopdta","INNER JOIN","StoreOrdersDophad","ON","StoreOrdersDopdta.sysno = StoreOrdersDophad.sysno","AND","StoreOrdersDopdta.seq = StoreOrdersDophad.seq","AND","StoreOrdersDopdta.ord_id = StoreOrdersDophad.ord_id"], x:["LEFT JOIN","OR","ORDER BY"]},
- {q:"查詢 v_Report_Rpt_INC1F0，條件 opendate 大於等於 2026/01/01，且 accno_no = '00047994'。", a:["SELECT","*","FROM","v_Report_Rpt_INC1F0","WHERE","opendate",">=","'2026/01/01'","AND","accno_no","=","'00047994'"], x:["accno_h + accno_no","OR","DELETE"]},
- {q:"查詢 ljm_body_light 中是否太歲 isTaishen = 1，而且年度 yea = '2027'。", a:["SELECT","*","FROM","ljm_body_light","WHERE","isTaishen","=","1","AND","yea","=","'2027'"], x:["OR","ORDER BY","DELETE"]},
- {q:"查詢 sys.objects 中名稱為 tmpLabel_2 的物件，顯示 name、type、type_desc。", a:["SELECT","name, type, type_desc","FROM","sys.objects","WHERE","name","=","'tmpLabel_2'"], x:["sys.sysprocesses","KILL","GROUP BY"]},
- {q:"找出 SQL Server 程式碼中有引用 tmpLabel_2 的模組。", a:["SELECT","OBJECT_SCHEMA_NAME(object_id), OBJECT_NAME(object_id), definition","FROM","sys.sql_modules","WHERE","definition","LIKE","'%tmpLabel_2%'"], x:["sys.objects","=","DELETE"]},
- {q:"查詢 watsta 中 type 為 B，而且 batchno 為 001 的資料。", a:["SELECT","*","FROM","watsta","WHERE","type","=","'B'","AND","batchno","=","'001'"], x:["OR","GROUP BY","KILL"]},
- {q:"查詢資料庫 baifu0811 的連線，並排除目前自己的 SPID。", a:["SELECT","spid, status, hostname, program_name, loginame","FROM","sys.sysprocesses","WHERE","DB_NAME(dbid)","=","'baifu0811'","AND","spid","<>","@@SPID"], x:["sys.objects","OR","DELETE"]},
- {q:"查詢 ljm_body_light 中 armamt 大於 1000，並依 armamt 由大到小排序。", a:["SELECT","*","FROM","ljm_body_light","WHERE","armamt",">","1000","ORDER BY","armamt","DESC"], x:["ASC","GROUP BY","DELETE"]},
- {q:"查詢 watsta 中 type 為 B 或 C，使用 IN 寫法。", a:["SELECT","*","FROM","watsta","WHERE","type","IN","('B','C')"], x:["BETWEEN","AND","DELETE"]},
- {q:"查詢目前資料庫的 Collation，欄位別名設為 DatabaseCollation。", a:["SELECT","DATABASEPROPERTYEX(DB_NAME(), 'Collation')","AS","DatabaseCollation"], x:["FROM","sys.objects","WHERE"]}
+ {q:"【SQL Server】查詢 tmpLabel_2 是 Table、View 還是預存程序，顯示 name、type、type_desc。", a:["SELECT","name, type, type_desc","FROM","sys.objects","WHERE","name","=","'tmpLabel_2'"], x:["sys.sql_modules","DELETE","ORDER BY"]},
+ {q:"【VB.NET】只有登入帳號是 admin、molly 或 hz222 時顯示 tr2，請拼出判斷條件。", a:["If","Session(\"LoginArray\")(0) = \"admin\"","Or","Session(\"LoginArray\")(0) = \"molly\"","Or","Session(\"LoginArray\")(0) = \"hz222\"","Then","tr2.Visible = True","End If"], x:["And","tr2.Visible = False","ElseIf"]},
+ {q:"【PowerShell】遞迴搜尋 D:\\網站目錄中的 aspx、ashx、asmx，並依建立時間由新到舊排序。", a:["Get-ChildItem \"D:\\網站目錄\"","-Recurse","-Include *.aspx,*.ashx,*.asmx","|","Sort-Object CreationTime -Descending","|","Select-Object FullName,CreationTime,LastWriteTime"], x:["-Ascending","Remove-Item","Where-Object"]},
+ {q:"【SQL Server】查出 baifu0811 的連線並排除自己目前的 SPID。", a:["SELECT","spid, status, hostname, program_name, loginame","FROM","sys.sysprocesses","WHERE","DB_NAME(dbid)","=","'baifu0811'","AND","spid","<>","@@SPID"], x:["OR","KILL","sys.objects"]},
+ {q:"【VB.NET】判斷現在是否已到達或超過 lastDate 後 90 天。", a:["If","DateTime.Now",">=","lastDate.AddDays(90)","Then","' 已到達或超過 90 天","End If"], x:[">","AddMonths(90)","Else"]},
+ {q:"【SQL Server】查詢 watsta 中 type 是 B 或 C，使用 IN 寫法。", a:["SELECT","*","FROM","watsta","WHERE","type","IN","('B','C')"], x:["BETWEEN","AND","DELETE"]},
+ {q:"【IIS】網站不應讓訪客直接看到資料夾檔案清單，請拼出應採取的設定。", a:["IIS","Directory Browsing","=","Disabled"], x:["Enabled","Anonymous Authentication","Delete"]},
+ {q:"【Git】將目前修改加入暫存區、建立 commit，再推送到遠端 main，請排出順序。", a:["git add .","git commit -m \"update\"","git push origin main"], x:["git pull origin main","git reset --hard","git init"]},
+ {q:"【SQL Server】找出哪些 SQL 模組的程式碼有引用 tmpLabel_2。", a:["SELECT","OBJECT_SCHEMA_NAME(object_id), OBJECT_NAME(object_id), definition","FROM","sys.sql_modules","WHERE","definition","LIKE","'%tmpLabel_2%'"], x:["sys.objects","=","DELETE"]},
+ {q:"【資安】檔案上傳目錄除了限制副檔名外，最重要的伺服器端防護之一是什麼？", a:["上傳目錄","禁止","執行伺服器端腳本"], x:["允許執行 ASPX","開啟 Directory Browsing","只檢查檔名"]}
 ];
 let i=0, correct=0, chosen=[], wrong=new Set();
 const $=id=>document.getElementById(id);
