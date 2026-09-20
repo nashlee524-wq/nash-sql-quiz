@@ -132,40 +132,45 @@ function advance(){S.day--;S.activityUsed=false;S.todaySpent=0;S.todayIncome=0;l
 function fmt(v){return (v>=0?'+':'')+Math.round(v)}function noisy(v,sd){return Math.round(clamp(v+rnd(sd),10,80))}
 function render(){meLabel.textContent=N.me+'（你）';oppLabel.textContent=N.opp;meAvatar.src=N.mePhoto||defaultAvatar;oppAvatar.src=N.oppPhoto||defaultAvatar;thirdRow.style.display=N.third?'flex':'none';if(N.third){thirdLabel.textContent=N.third;thirdAvatar.src=N.thirdPhoto||defaultAvatar}days.textContent=S.day;money.textContent=cash(S.money);raised.textContent=cash(S.raised);spent.textContent=cash(S.spent);buzz.textContent=Math.round(S.buzz);favor.textContent=Math.round(S.favor);dailyDonate.textContent=cash(S.dailyDonate);activityIncome.textContent=cash(S.todayIncome);todaySpent.textContent=cash(S.todaySpent);let pa=noisy(S.a,2.5),pb=noisy(S.b,2.5),pc=N.third?noisy(S.c,2.2):0;aPoll.textContent=pa.toFixed(1)+'%';bPoll.textContent=pb.toFixed(1)+'%';if(N.third)cPoll.textContent=pc.toFixed(1)+'%';und.textContent=Math.max(0,100-pa-pb-pc).toFixed(1)+'%';abar.style.width=pa+'%';bbar.style.width=pb+'%';if(N.third)cbar.style.width=pc+'%';let cs=N.third?` · ${N.third} ${noisy(S.c,6)}`:'';threads.textContent=`${N.me} ${noisy(S.a+(S.buzz-50)*.12,8)} · ${N.opp} ${noisy(S.b,8)}${cs}`;fb.textContent=`${N.me} ${noisy(S.a+(S.favor-50)*.06,5)} · ${N.opp} ${noisy(S.b,5)}${cs}`;yt.textContent=`${N.me} ${noisy(S.a+(S.buzz-50)*.08,6)} · ${N.opp} ${noisy(S.b,6)}${cs}`;phone.textContent=`${N.me} ${noisy(S.a,2.2)} · ${N.opp} ${noisy(S.b,2.2)}${N.third?' · '+N.third+' '+noisy(S.c,2.2):''}`;street.textContent=`${N.me} ${noisy(S.a,4)} · ${N.opp} ${noisy(S.b,4)}${cs}`;truth.textContent=`${N.me} ${S.a.toFixed(1)} · ${N.opp} ${S.b.toFixed(1)}${N.third?' · '+N.third+' '+S.c.toFixed(1):''}`;document.querySelectorAll('.activity').forEach(x=>x.disabled=S.activityUsed)}
 function customEvent(){
- if(S.over)return;
- let name=customName.value.trim()||customType.value,ch=channel.value,t=tone.value;
- let cost={Threads:50000,Facebook:120000,YouTube:180000,'新聞媒體':150000,'記者會':220000,'電話接觸':90000,'街頭活動':70000}[ch];
- if(!spend(cost))return;
- let before={a:S.a,b:S.b,c:S.c},base=t==='attack'?rnd(3):t==='defend'?1+rnd(2):1.5+rnd(2);
- let backlash=t==='attack'&&Math.random()<.35?-3-Math.random()*3:0,v=base+backlash;
- applyPollImpact(v);
- S.buzz=clamp(S.buzz+(ch==='Threads'?12:ch==='新聞媒體'?9:5)+rnd(3),0,100);
- S.favor=clamp(S.favor+(t==='positive'?4:t==='defend'?2:-1)+backlash,0,100);
- let type=tone.options[tone.selectedIndex].text;
- let why=backlash?'攻擊提高議題曝光，但引發部分選民反感，出現反噬。':t==='attack'?'主動質疑對手提高議題聲量；攻擊策略同時存在反噬風險。':t==='defend'?'主動澄清降低爭議的不確定性，並嘗試穩定支持者。':'正面宣傳提高候選人曝光與好感度。';
- let myDelta=S.a-before.a,oppDelta=S.b-before.b,outcome='',impact='';
- if(t==='attack'){
-   if(backlash<0||myDelta<-.45) outcome='攻擊失敗／遭到反噬';
-   else if(oppDelta<-.45&&myDelta>.15) outcome='攻擊成功';
-   else if(Math.abs(myDelta)<.35&&Math.abs(oppDelta)<.35) outcome='攻擊未造成明顯影響';
-   else if(oppDelta<-.25) outcome='對手受到輕微傷害';
-   else outcome='攻擊效果有限';
- }else if(t==='defend'){
-   if(myDelta>.45) outcome='澄清成功';
-   else if(myDelta<-.45) outcome='澄清失敗／爭議擴大';
-   else outcome='澄清影響有限';
- }else{
-   if(myDelta>.45) outcome='宣傳成功';
-   else if(myDelta<-.45) outcome='宣傳反效果';
-   else outcome='宣傳未造成明顯影響';
- }
- if(myDelta>.25) impact+=N.me+'受益 '+myDelta.toFixed(1)+'%；'; else if(myDelta<-.25) impact+=N.me+'受損 '+Math.abs(myDelta).toFixed(1)+'%；'; else impact+=N.me+'幾乎無影響；';
- if(oppDelta>.25) impact+=N.opp+'受益 '+oppDelta.toFixed(1)+'%'; else if(oppDelta<-.25) impact+=N.opp+'受損 '+Math.abs(oppDelta).toFixed(1)+'%'; else impact+=N.opp+'幾乎無影響';
- let record=`<b>第 ${TOTAL_DAYS+1-S.day} 天｜發動事件：${name}</b><br>類型：${type}<br>管道：${ch}<br>花費：${cash(cost)}<br><b>結果：${outcome}</b><br>影響判定：${impact}<br>原因：${why}<br>模擬支持率：${pollLine(before)}`;
- addLog(record);
- customName.value='';
- render();
- toastMsg('發動完成：'+outcome);
+ try{
+  if(!S||S.over)return;
+  const nameEl=document.getElementById('customName');
+  const typeEl=document.getElementById('customType');
+  const channelEl=document.getElementById('channel');
+  const toneEl=document.getElementById('tone');
+  let name=(nameEl.value||'').trim()||typeEl.value,ch=channelEl.value,t=toneEl.value;
+  let cost={Threads:50000,Facebook:120000,YouTube:180000,'新聞媒體':150000,'記者會':220000,'電話接觸':90000,'街頭活動':70000}[ch]||0;
+  if(!spend(cost))return;
+  let before={a:S.a,b:S.b,c:S.c},base=t==='attack'?rnd(3):t==='defend'?1+rnd(2):1.5+rnd(2);
+  let backlash=t==='attack'&&Math.random()<.35?-3-Math.random()*3:0,v=base+backlash;
+  applyPollImpact(v);
+  S.buzz=clamp(S.buzz+(ch==='Threads'?12:ch==='新聞媒體'?9:5)+rnd(3),0,100);
+  S.favor=clamp(S.favor+(t==='positive'?4:t==='defend'?2:-1)+backlash,0,100);
+  let type=toneEl.options[toneEl.selectedIndex].text;
+  let why=backlash?'攻擊提高議題曝光，但引發部分選民反感，出現反噬。':t==='attack'?'主動質疑對手提高議題聲量；攻擊策略同時存在反噬風險。':t==='defend'?'主動澄清降低爭議的不確定性，並嘗試穩定支持者。':'正面宣傳提高候選人曝光與好感度。';
+  let myDelta=S.a-before.a,oppDelta=S.b-before.b,outcome='',impact='';
+  if(t==='attack'){
+    if(backlash<0||myDelta<-.45) outcome='攻擊失敗／遭到反噬';
+    else if(oppDelta<-.45&&myDelta>.15) outcome='攻擊成功';
+    else if(Math.abs(myDelta)<.35&&Math.abs(oppDelta)<.35) outcome='攻擊未造成明顯影響';
+    else if(oppDelta<-.25) outcome='對手受到輕微傷害';
+    else outcome='攻擊效果有限';
+  }else if(t==='defend'){
+    if(myDelta>.45) outcome='澄清成功';
+    else if(myDelta<-.45) outcome='澄清失敗／爭議擴大';
+    else outcome='澄清影響有限';
+  }else{
+    if(myDelta>.45) outcome='宣傳成功';
+    else if(myDelta<-.45) outcome='宣傳反效果';
+    else outcome='宣傳未造成明顯影響';
+  }
+  if(myDelta>.25) impact+=N.me+'受益 '+myDelta.toFixed(1)+'%；'; else if(myDelta<-.25) impact+=N.me+'受損 '+Math.abs(myDelta).toFixed(1)+'%；'; else impact+=N.me+'幾乎無影響；';
+  if(oppDelta>.25) impact+=N.opp+'受益 '+oppDelta.toFixed(1)+'%'; else if(oppDelta<-.25) impact+=N.opp+'受損 '+Math.abs(oppDelta).toFixed(1)+'%'; else impact+=N.opp+'幾乎無影響';
+  addLog(`<b>第 ${TOTAL_DAYS+1-S.day} 天｜發動事件：${name}</b><br>類型：${type}<br>管道：${ch}<br>花費：${cash(cost)}<br><b>結果：${outcome}</b><br>影響判定：${impact}<br>原因：${why}<br>模擬支持率：${pollLine(before)}`);
+  nameEl.value='';
+  render();
+  toastMsg('發動完成：'+outcome);
+ }catch(err){alert('發動事件發生錯誤：'+err.message);console.error(err)}
 }
 function finish(){S.over=true;let vals=[{n:N.me,v:S.a},{n:N.opp,v:S.b}];if(N.third)vals.push({n:N.third,v:S.c});let max=Math.max(...vals.map(x=>x.v)),won=S.a===max&&vals.filter(x=>x.v===max).length===1;eventTitle.textContent=won?'🎉 恭喜當選 '+N.office:'開票夜';eventVisual.textContent=won?'🎆🏆🎊':'🗳️📊';if(won){cheer();fireworks();}eventText.innerHTML=`真正支持度揭曉：<br><b style="color:var(--a)">${N.me} ${S.a.toFixed(1)}%</b>　<b style="color:var(--b)">${N.opp} ${S.b.toFixed(1)}%</b>${N.third?'　<b style="color:#b8a7ff">'+N.third+' '+S.c.toFixed(1)+'%</b>':''}　其他/未決定 ${S.und.toFixed(1)}%<br><br>累計募款 ${cash(S.raised)} · 累計支出 ${cash(S.spent)} · 結餘 ${cash(S.money)}`;choices.innerHTML=`<button class="primary" onclick="setup.style.display='flex'">再玩一次</button>`;truth.classList.remove('hiddenVal');addLog((won?'🎉 模擬結果：'+N.me+'當選 '+N.office+'。':'模擬開票結束。')+' 隱藏支持度公開。');render()}
 myPrev.src=oppPrev.src=thirdPrev.src=defaultAvatar;setup.style.display='flex';
