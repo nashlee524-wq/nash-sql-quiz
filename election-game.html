@@ -111,9 +111,21 @@ function resetGame(){
   let remainingReal=historical.filter(e=>!used.has(e));
   let fictional=[...events].sort(()=>Math.random()-.5);
   let q=mode&&mode.value==='real'?[...firstFive,...remainingReal,...fictional]:[...firstFive,...fictional];
-  S={day:TOTAL_DAYS,money:15000000,raised:0,spent:0,todaySpent:0,todayIncome:0,dailyDonate:0,buzz:50,favor:50,a:hasC?37:43,b:hasC?34:39,c:hasC?17:0,und:hasC?12:18,pending:[],over:false,activityUsed:false,eventQueue:q,eventActive:false};
+  let startA,startB,startC,startUnd,startNote;
+  if(hasC){
+    let pool=[34,33,32].sort(()=>Math.random()-.5);
+    startA=pool[0];startB=pool[1];startC=pool[2];startUnd=100-startA-startB-startC;
+    startNote='開局抽籤：三位候選人的起始支持度隨機分配，沒有人固定領先。';
+  }else{
+    let r=Math.random();
+    if(r<.34){startA=41;startB=41;startNote='開局抽籤：雙方平手。';}
+    else if(r<.67){startA=40;startB=42;startNote='開局抽籤：'+N.opp+'暫時領先 2%。';}
+    else{startA=42;startB=40;startNote='開局抽籤：'+N.me+'暫時領先 2%。';}
+    startC=0;startUnd=100-startA-startB;
+  }
+  S={day:TOTAL_DAYS,money:15000000,raised:0,spent:0,todaySpent:0,todayIncome:0,dailyDonate:0,buzz:50,favor:50,a:startA,b:startB,c:startC,und:startUnd,pending:[],over:false,activityUsed:false,eventQueue:q,eventActive:false};
   document.getElementById('log').innerHTML='';
-  addLog('競選開始｜職務：'+N.office+'｜選戰 '+TOTAL_DAYS+' 天。每天請按「抽取今日事件」。');
+  addLog('競選開始｜職務：'+N.office+'｜選戰 '+TOTAL_DAYS+' 天。<br><b>'+startNote+'</b><br>每天請按「抽取今日事件」。');
   buildActivities();prepareDay();render();
 }
 function rnd(n=1){return (Math.random()*2-1)*n}function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
