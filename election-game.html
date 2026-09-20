@@ -143,11 +143,29 @@ function customEvent(){
  S.favor=clamp(S.favor+(t==='positive'?4:t==='defend'?2:-1)+backlash,0,100);
  let type=tone.options[tone.selectedIndex].text;
  let why=backlash?'攻擊提高議題曝光，但引發部分選民反感，出現反噬。':t==='attack'?'主動質疑對手提高議題聲量；攻擊策略同時存在反噬風險。':t==='defend'?'主動澄清降低爭議的不確定性，並嘗試穩定支持者。':'正面宣傳提高候選人曝光與好感度。';
- let record=`<b>第 ${TOTAL_DAYS+1-S.day} 天｜發動事件：${name}</b><br>類型：${type}<br>管道：${ch}<br>花費：${cash(cost)}<br>原因：${why}<br>模擬支持率：${pollLine(before)}`;
+ let myDelta=S.a-before.a,oppDelta=S.b-before.b,outcome='',impact='';
+ if(t==='attack'){
+   if(backlash<0||myDelta<-.45) outcome='攻擊失敗／遭到反噬';
+   else if(oppDelta<-.45&&myDelta>.15) outcome='攻擊成功';
+   else if(Math.abs(myDelta)<.35&&Math.abs(oppDelta)<.35) outcome='攻擊未造成明顯影響';
+   else if(oppDelta<-.25) outcome='對手受到輕微傷害';
+   else outcome='攻擊效果有限';
+ }else if(t==='defend'){
+   if(myDelta>.45) outcome='澄清成功';
+   else if(myDelta<-.45) outcome='澄清失敗／爭議擴大';
+   else outcome='澄清影響有限';
+ }else{
+   if(myDelta>.45) outcome='宣傳成功';
+   else if(myDelta<-.45) outcome='宣傳反效果';
+   else outcome='宣傳未造成明顯影響';
+ }
+ if(myDelta>.25) impact+=N.me+'受益 '+myDelta.toFixed(1)+'%；'; else if(myDelta<-.25) impact+=N.me+'受損 '+Math.abs(myDelta).toFixed(1)+'%；'; else impact+=N.me+'幾乎無影響；';
+ if(oppDelta>.25) impact+=N.opp+'受益 '+oppDelta.toFixed(1)+'%'; else if(oppDelta<-.25) impact+=N.opp+'受損 '+Math.abs(oppDelta).toFixed(1)+'%'; else impact+=N.opp+'幾乎無影響';
+ let record=`<b>第 ${TOTAL_DAYS+1-S.day} 天｜發動事件：${name}</b><br>類型：${type}<br>管道：${ch}<br>花費：${cash(cost)}<br><b>結果：${outcome}</b><br>影響判定：${impact}<br>原因：${why}<br>模擬支持率：${pollLine(before)}`;
  addLog(record);
  customName.value='';
  render();
- toastMsg('發動成功！已加入競選紀錄');
+ toastMsg('發動完成：'+outcome);
 }
 function finish(){S.over=true;let vals=[{n:N.me,v:S.a},{n:N.opp,v:S.b}];if(N.third)vals.push({n:N.third,v:S.c});let max=Math.max(...vals.map(x=>x.v)),won=S.a===max&&vals.filter(x=>x.v===max).length===1;eventTitle.textContent=won?'🎉 恭喜當選 '+N.office:'開票夜';eventVisual.textContent=won?'🎆🏆🎊':'🗳️📊';if(won){cheer();fireworks();}eventText.innerHTML=`真正支持度揭曉：<br><b style="color:var(--a)">${N.me} ${S.a.toFixed(1)}%</b>　<b style="color:var(--b)">${N.opp} ${S.b.toFixed(1)}%</b>${N.third?'　<b style="color:#b8a7ff">'+N.third+' '+S.c.toFixed(1)+'%</b>':''}　其他/未決定 ${S.und.toFixed(1)}%<br><br>累計募款 ${cash(S.raised)} · 累計支出 ${cash(S.spent)} · 結餘 ${cash(S.money)}`;choices.innerHTML=`<button class="primary" onclick="setup.style.display='flex'">再玩一次</button>`;truth.classList.remove('hiddenVal');addLog((won?'🎉 模擬結果：'+N.me+'當選 '+N.office+'。':'模擬開票結束。')+' 隱藏支持度公開。');render()}
 myPrev.src=oppPrev.src=thirdPrev.src=defaultAvatar;setup.style.display='flex';
