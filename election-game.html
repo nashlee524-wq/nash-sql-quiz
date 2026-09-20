@@ -103,9 +103,14 @@ function startGame(){try{
   document.getElementById('setup').style.display='none';
 }catch(err){alert('開始競選時發生錯誤：'+err.message);console.error(err)}}
 function resetGame(){
-  let hasC=!!N.third,q=[...events].sort(()=>Math.random()-.5);
+  let hasC=!!N.third;
   const mode=document.getElementById('gameMode');
-  if(mode&&mode.value==='real'){let r=[...officeEvents(),...realEvents].sort(()=>Math.random()-.5);q=[...r,...q].sort(()=>Math.random()-.5)}
+  let historical=[...officeEvents(),...realEvents].sort(()=>Math.random()-.5);
+  let firstFive=historical.slice(0,Math.min(5,TOTAL_DAYS));
+  let used=new Set(firstFive);
+  let remainingReal=historical.filter(e=>!used.has(e));
+  let fictional=[...events].sort(()=>Math.random()-.5);
+  let q=mode&&mode.value==='real'?[...firstFive,...remainingReal,...fictional]:[...firstFive,...fictional];
   S={day:TOTAL_DAYS,money:15000000,raised:0,spent:0,todaySpent:0,todayIncome:0,dailyDonate:0,buzz:50,favor:50,a:hasC?37:43,b:hasC?34:39,c:hasC?17:0,und:hasC?12:18,pending:[],over:false,activityUsed:false,eventQueue:q,eventActive:false};
   document.getElementById('log').innerHTML='';
   addLog('競選開始｜職務：'+N.office+'｜選戰 '+TOTAL_DAYS+' 天。每天請按「抽取今日事件」。');
