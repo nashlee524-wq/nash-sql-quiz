@@ -147,7 +147,7 @@ function customEvent(){
  addLog(record);
  customName.value='';
  render();
- toastMsg('已發動事件，並加入競選紀錄');
+ toastMsg('發動成功！已加入競選紀錄');
 }
 function finish(){S.over=true;let vals=[{n:N.me,v:S.a},{n:N.opp,v:S.b}];if(N.third)vals.push({n:N.third,v:S.c});let max=Math.max(...vals.map(x=>x.v)),won=S.a===max&&vals.filter(x=>x.v===max).length===1;eventTitle.textContent=won?'🎉 恭喜當選 '+N.office:'開票夜';eventVisual.textContent=won?'🎆🏆🎊':'🗳️📊';if(won){cheer();fireworks();}eventText.innerHTML=`真正支持度揭曉：<br><b style="color:var(--a)">${N.me} ${S.a.toFixed(1)}%</b>　<b style="color:var(--b)">${N.opp} ${S.b.toFixed(1)}%</b>${N.third?'　<b style="color:#b8a7ff">'+N.third+' '+S.c.toFixed(1)+'%</b>':''}　其他/未決定 ${S.und.toFixed(1)}%<br><br>累計募款 ${cash(S.raised)} · 累計支出 ${cash(S.spent)} · 結餘 ${cash(S.money)}`;choices.innerHTML=`<button class="primary" onclick="setup.style.display='flex'">再玩一次</button>`;truth.classList.remove('hiddenVal');addLog((won?'🎉 模擬結果：'+N.me+'當選 '+N.office+'。':'模擬開票結束。')+' 隱藏支持度公開。');render()}
 myPrev.src=oppPrev.src=thirdPrev.src=defaultAvatar;setup.style.display='flex';
