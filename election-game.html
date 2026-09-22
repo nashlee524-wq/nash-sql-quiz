@@ -183,25 +183,35 @@ function rpsBattle(e){
  S.eventActive=true;drawEventBtn.style.display='none';
  eventTitle.textContent=`第 ${TOTAL_DAYS+1-S.day} 天 · 突發攻擊 · 剪刀石頭布`;
  eventVisual.innerHTML=sceneFor({t:'候選人攻防',x:'攻擊 爭議'});
- eventText.innerHTML=`<span class="realbadge">對手攻擊</span><br>${N.opp} 對你發動攻勢：${e.t}<br><br><b>用剪刀石頭布決定這次攻防結果。</b><div class="muted">勝：成功反擊　平：影響有限　敗：攻擊奏效</div>`;
+ eventText.innerHTML=`<span class="realbadge">對手攻擊</span><br>${N.opp} 對你發動攻勢：${e.t}<br><br><b>用剪刀石頭布決定這次攻防結果。</b><div class="muted">投入 30 萬以下：剪刀石頭布　投入 30 萬以上：改玩比大小；50 萬在比大小有額外優勢</div>`;
  choices.innerHTML='';
- let budget=document.createElement('select');budget.id='attackBudget';budget.style.width='100%';budget.style.margin='10px 0';budget.innerHTML='<option value="0">不追加攻防預算</option><option value="50000">投入 $50,000</option><option value="150000">投入 $150,000</option><option value="300000">投入 $300,000</option><option value="500000">投入 $500,000</option>';choices.appendChild(budget);
+ let budget=document.createElement('select');budget.id='attackBudget';budget.style.width='100%';budget.style.margin='10px 0';budget.innerHTML='<option value="0">不追加攻防預算</option><option value="50000">投入 $50,000</option><option value="150000">投入 $150,000</option><option value="300000">投入 $300,000（比大小）</option><option value="500000">投入 $500,000（比大小・優勢）</option>';choices.appendChild(budget);
  [['rock','✊ 石頭'],['paper','✋ 布'],['scissors','✌️ 剪刀']].forEach(([v,label])=>{let b=document.createElement('button');b.className='choice';b.textContent=label;b.onclick=()=>resolveRps(v,e);choices.appendChild(b)});
  eventSound(true);
 }
 function resolveRps(me,e){
  let budgetEl=document.getElementById('attackBudget'),budget=budgetEl?parseInt(budgetEl.value)||0:0;if(budget&&!spend(budget))return;
+ if(budget>=300000){return numberBattle(e,budget)}
  let opts=['rock','paper','scissors'],opp=opts[Math.floor(Math.random()*3)],win=(me==='rock'&&opp==='scissors')||(me==='paper'&&opp==='rock')||(me==='scissors'&&opp==='paper'),tie=me===opp;
- let boost={0:0,50000:.08,150000:.18,300000:.32,500000:.48}[budget]||0;
- if(!win&&!tie&&Math.random()<boost){tie=true;result='攻防資源發揮效果，原本不利局面被救回';}
- else if(tie&&budget&&Math.random()<boost*.65){tie=false;win=true;result='攻防資源擴大傳播效果，平手轉為反擊成功';}
- let before={a:S.a,b:S.b,c:S.c},v=0,result=result||'';
- if(tie){v=rnd(.25);result=result||'平手，攻擊沒有造成明顯效果';}
- else if(win){v=1.1+Math.random()*1.3;result=result||'你贏了，成功化解並反擊';S.favor=clamp(S.favor+2,0,100);}
+ let before={a:S.a,b:S.b,c:S.c},v=0,result='';
+ if(tie){v=rnd(.25);result='平手，攻擊沒有造成明顯效果';}
+ else if(win){v=1.1+Math.random()*1.3;result='你贏了，成功化解並反擊';S.favor=clamp(S.favor+2,0,100);}
  else{v=-1.1-Math.random()*1.5;result='你輸了，對手攻擊奏效';S.favor=clamp(S.favor-2,0,100);}
  applyPollImpact(v);
- addLog(`<b>第 ${TOTAL_DAYS+1-S.day} 天｜突發攻防：${e.t}</b><br>你出：${rpsName(me)}｜${N.opp} 出：${rpsName(opp)}<br>攻防預算：${cash(budget)}<br><b>結果：${result}</b><br>模擬支持率：${pollLine(before)}`);
+ addLog(`<b>第 ${TOTAL_DAYS+1-S.day} 天｜突發攻防：${e.t}</b><br>模式：剪刀石頭布｜你出：${rpsName(me)}｜${N.opp} 出：${rpsName(opp)}<br>攻防預算：${cash(budget)}<br><b>結果：${result}</b><br>模擬支持率：${pollLine(before)}`);
  eventText.innerHTML=`你出 <b>${rpsName(me)}</b>，${N.opp} 出 <b>${rpsName(opp)}</b><br><br><b>${result}</b>`;
+ choices.innerHTML='';render();setTimeout(endDay,900);
+}
+function numberBattle(e,budget){
+ let before={a:S.a,b:S.b,c:S.c};
+ let bonus=budget>=500000?2:1,me=Math.floor(Math.random()*10)+1+bonus,opp=Math.floor(Math.random()*10)+1;
+ let win=me>opp,tie=me===opp,v=0,result='';
+ if(tie){v=rnd(.2);result='雙方數字相同，攻防打平';}
+ else if(win){v=1.2+Math.random()*1.5;result='你的資源投入奏效，攻防勝出';S.favor=clamp(S.favor+2,0,100);}
+ else{v=-.8-Math.random()*1.2;result='對手數字較大，這次攻防失利';S.favor=clamp(S.favor-1.5,0,100);}
+ applyPollImpact(v);
+ addLog(`<b>第 ${TOTAL_DAYS+1-S.day} 天｜突發攻防：${e.t}</b><br>模式：比大小｜你：${me}｜${N.opp}：${opp}<br>攻防預算：${cash(budget)}<br><b>結果：${result}</b><br>模擬支持率：${pollLine(before)}`);
+ eventText.innerHTML=`投入較高攻防預算，進入 <b>比大小</b><br><br>你：<b>${me}</b>　${N.opp}：<b>${opp}</b><br><br><b>${result}</b>`;
  choices.innerHTML='';render();setTimeout(endDay,900);
 }
 function resolveDecision(c,e,isSudden){if(!spend(c[2]))return;S.buzz=clamp(S.buzz+c[3]+rnd(3),0,100);S.favor=clamp(S.favor+c[4]+rnd(2),0,100);let v=(c[4]*.12+c[3]*.04)+rnd(.8),q=applyPollImpact(v);addLog(`<b>第 ${TOTAL_DAYS+1-S.day} 天｜${isSudden?'突發事件':'主要事件'}：${e.t}</b><br>決策：${c[0]}<br>原因：${decisionReason(c,v)}<br>模擬支持率：${pollLine(q)}`);render();choices.innerHTML='';if(!isSudden&&Math.random()<.25){setTimeout(()=>{let e2=pickEvent();if(isAttackEvent(e2)){rpsBattle(e2);addLog(`<b>第 ${TOTAL_DAYS+1-S.day} 天｜對手突發攻擊</b><br>${e2.t}｜進入剪刀石頭布攻防。`)}else{showEvent(e2,true);addLog(`<b>第 ${TOTAL_DAYS+1-S.day} 天｜突發事件發生</b><br>${e2.t}`)}},350)}else setTimeout(endDay,350)}
