@@ -57,16 +57,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 
 <script>
 const qs = [
- {q:"【SQL Server】查詢 tmpLabel_2 是 Table、View 還是預存程序，顯示 name、type、type_desc。", a:["SELECT","name, type, type_desc","FROM","sys.objects","WHERE","name","=","'tmpLabel_2'"], x:["sys.sql_modules","DELETE","ORDER BY"]},
- {q:"【VB.NET】只有登入帳號是 admin、molly 或 hz222 時顯示 tr2，請拼出判斷條件。", a:["If","Session(\"LoginArray\")(0) = \"admin\"","Or","Session(\"LoginArray\")(0) = \"molly\"","Or","Session(\"LoginArray\")(0) = \"hz222\"","Then","tr2.Visible = True","End If"], x:["And","tr2.Visible = False","ElseIf"]},
- {q:"【PowerShell】遞迴搜尋 D:\\網站目錄中的 aspx、ashx、asmx，並依建立時間由新到舊排序。", a:["Get-ChildItem \"D:\\網站目錄\"","-Recurse","-Include *.aspx,*.ashx,*.asmx","|","Sort-Object CreationTime -Descending","|","Select-Object FullName,CreationTime,LastWriteTime"], x:["-Ascending","Remove-Item","Where-Object"]},
- {q:"【SQL Server】查出 baifu0811 的連線並排除自己目前的 SPID。", a:["SELECT","spid, status, hostname, program_name, loginame","FROM","sys.sysprocesses","WHERE","DB_NAME(dbid)","=","'baifu0811'","AND","spid","<>","@@SPID"], x:["OR","KILL","sys.objects"]},
- {q:"【VB.NET】判斷現在是否已到達或超過 lastDate 後 90 天。", a:["If","DateTime.Now",">=","lastDate.AddDays(90)","Then","' 已到達或超過 90 天","End If"], x:[">","AddMonths(90)","Else"]},
- {q:"【SQL Server】查詢 watsta 中 type 是 B 或 C，使用 IN 寫法。", a:["SELECT","*","FROM","watsta","WHERE","type","IN","('B','C')"], x:["BETWEEN","AND","DELETE"]},
- {q:"【IIS】網站不應讓訪客直接看到資料夾檔案清單，請拼出應採取的設定。", a:["IIS","Directory Browsing","=","Disabled"], x:["Enabled","Anonymous Authentication","Delete"]},
- {q:"【Git】將目前修改加入暫存區、建立 commit，再推送到遠端 main，請排出順序。", a:["git add .","git commit -m \"update\"","git push origin main"], x:["git pull origin main","git reset --hard","git init"]},
- {q:"【SQL Server】找出哪些 SQL 模組的程式碼有引用 tmpLabel_2。", a:["SELECT","OBJECT_SCHEMA_NAME(object_id), OBJECT_NAME(object_id), definition","FROM","sys.sql_modules","WHERE","definition","LIKE","'%tmpLabel_2%'"], x:["sys.objects","=","DELETE"]},
- {q:"【資安】檔案上傳目錄除了限制副檔名外，最重要的伺服器端防護之一是什麼？", a:["上傳目錄","禁止","執行伺服器端腳本"], x:["允許執行 ASPX","開啟 Directory Browsing","只檢查檔名"]}
+ {q:"【SQL Server】請把查詢結果依 CreateDate 由新到舊排序。", a:["SELECT","*","FROM","SampleTable","ORDER BY","CreateDate","DESC"], x:["ASC","WHERE","DELETE"]}
 ];
 let i=0, correct=0, chosen=[], wrong=new Set();
 const $=id=>document.getElementById(id);
