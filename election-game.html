@@ -51,6 +51,12 @@ const events=[
 {t:'投票前大型政見會',x:'最後一場大型政見發表會即將登場。',c:[['集中準備三項主軸','debate',350000,8,8],['主打負面攻防','attack',180000,12,-5],['穩健守成','none',0,1,3]]}
 ];
 
+const verified2026Extra=[
+{real:true,date:'2026/09/20',t:'候選人形象與認知戰攻防',x:'選戰升溫，雙方就候選人形象、競選操作與市政表現隔空交鋒。',src:'中央社',url:'https://www.cna.com.tw/news/aipl/202609200159.aspx',icon:'⚔️📰',c:[['回到市政與政策主軸','policy',80000,2,5],['正面回應競選操作質疑','news',70000,5,2],['強力反擊對手說法','attack',50000,8,-3]]},
+{real:true,date:'2026/09/19',t:'媒體專訪安排引發討論',x:'候選人的媒體專訪與節目通告安排受到討論，是否接受同台或專訪成為選戰話題。',src:'中央社',url:'https://www.cna.com.tw/news/aloc/202609190106.aspx',icon:'🎙️📺',c:[['接受公開專訪說明政見','news',90000,6,5],['安排雙方同台對談','debate',140000,8,4],['維持既定媒體節奏','none',0,-1,1]]},
+{real:true,date:'2026/09/15',t:'選舉議題是否牽涉候選人家人',x:'選戰話題延伸到候選人家人，引發是否應將焦點拉回市政與候選人本人表現的討論。',src:'中央社',url:'https://www.cna.com.tw/news/aloc/202609150343.aspx',icon:'👨‍👩‍👧‍👦📰',c:[['公開呼籲不要牽涉家人','news',40000,1,6],['把焦點拉回市政議題','policy',50000,2,6],['反擊相關質疑','attack',30000,7,-4]]},
+{real:true,date:'2026/09/11',t:'兒少保護制度成為市政攻防',x:'兒少保護與市府處置方式成為議會及選戰討論焦點，雙方就制度改善提出說法。',src:'中央社',url:'https://www.cna.com.tw/news/aloc/202609110170.aspx',icon:'🏛️🛡️',c:[['提出完整制度改善方案','policy',120000,4,7],['召開記者會說明處置','news',100000,6,4],['批評對手只做政治攻防','attack',50000,8,-3]]}
+];
 const realEvents=[
 {real:true,date:'2026/09/02',t:'國際交換學生資格與補助爭議',x:'台北市長蔣萬安大兒子錄取北市國際交換學生計畫，引發國籍、補助與程序討論。教育局表示計畫未設國籍限制，蔣萬安表示不領相關補助。',src:'中央社',url:'https://www.cna.com.tw/news/aloc/202609020023.aspx',c:[['公開完整規則與審查資料','fact',80000,1,6],['召開記者會回應','news',180000,5,2],['不追加回應','none',0,-2,-1]]},
 {real:true,date:'2026/09/08',t:'監察院查調交換學生計畫',x:'監察院表示，就台北市國際交換學生計畫進行查調先行程序，並向教育局詢問相關事項。',src:'中央社',url:'https://www.cna.com.tw/news/aipl/202609080303.aspx',c:[['配合查調並公開資料','fact',50000,0,5],['政治攻防式回應','attack',50000,7,-4],['簡短依法辦理聲明','none',0,-1,1]]},
@@ -114,12 +120,12 @@ function startGame(){try{
 function resetGame(){
   let hasC=!!N.third;
   const mode=document.getElementById('gameMode');
-  let historical=[...officeEvents(),...realEvents].sort(()=>Math.random()-.5);
-  let firstFive=historical.slice(0,Math.min(5,TOTAL_DAYS));
-  let used=new Set(firstFive);
-  let remainingReal=historical.filter(e=>!used.has(e));
+  let currentYearReal=[...realEvents,...verified2026Extra].sort(()=>Math.random()-.5);
+  let firstTen=currentYearReal.slice(0,Math.min(10,TOTAL_DAYS));
+  let used=new Set(firstTen);
+  let remainingReal=[...currentYearReal.filter(e=>!used.has(e)),...officeEvents()].sort(()=>Math.random()-.5);
   let fictional=[...events].sort(()=>Math.random()-.5);
-  let q=mode&&mode.value==='real'?[...firstFive,...remainingReal,...fictional]:[...firstFive,...fictional];
+  let q=mode&&mode.value==='real'?[...firstTen,...remainingReal,...fictional]:[...firstTen,...fictional];
   let startA,startB,startC,startUnd,startNote;
   if(hasC){
     let pool=[34,33,32].sort(()=>Math.random()-.5);
@@ -134,7 +140,7 @@ function resetGame(){
   }
   S={day:TOTAL_DAYS,money:15000000,raised:0,spent:0,todaySpent:0,todayIncome:0,dailyDonate:0,buzz:50,favor:50,a:startA,b:startB,c:startC,und:startUnd,pending:[],over:false,activityUsed:false,eventQueue:q,eventActive:false};
   document.getElementById('log').innerHTML='';
-  addLog('競選開始｜職務：'+N.office+'｜選戰 '+TOTAL_DAYS+' 天。<br><b>'+startNote+'</b><br>每天請按「抽取今日事件」。');
+  addLog('競選開始｜職務：'+N.office+'｜選戰 '+TOTAL_DAYS+' 天。<br><b>'+startNote+'</b><br>前 10 天固定從 2026 年真實事件池抽取；每天請按「抽取今日事件」。');
   buildActivities();prepareDay();render();
 }
 function rnd(n=1){return (Math.random()*2-1)*n}function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
