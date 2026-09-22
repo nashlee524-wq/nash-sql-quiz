@@ -52,6 +52,13 @@ const events=[
 {t:'投票前大型政見會',x:'最後一場大型政見發表會即將登場。',c:[['集中準備三項主軸','debate',350000,8,8],['主打負面攻防','attack',180000,12,-5],['穩健守成','none',0,1,3]]}
 ];
 
+const localKnowledgeEvents=[
+{t:'地方知識考驗：象山在哪一區？',x:'掃街時有市民突然問你：象山自然步道主要位於臺北市哪一個行政區？',quiz:true,answer:'信義區',c:[['信義區','quiz',0,0,0],['文山區','quiz',0,0,0],['南港區','quiz',0,0,0],['大安區','quiz',0,0,0]]},
+{t:'地方知識考驗：西門町在哪一區？',x:'地方活動主持人臨時考你：西門町主要位於臺北市哪一個行政區？',quiz:true,answer:'萬華區',c:[['萬華區','quiz',0,0,0],['中正區','quiz',0,0,0],['大同區','quiz',0,0,0],['中山區','quiz',0,0,0]]},
+{t:'地方知識考驗：木柵在哪一區？',x:'拜票途中有人問：一般所稱的木柵地區屬於臺北市哪一個行政區？',quiz:true,answer:'文山區',c:[['文山區','quiz',0,0,0],['信義區','quiz',0,0,0],['南港區','quiz',0,0,0],['內湖區','quiz',0,0,0]]},
+{t:'地方知識考驗：臺北101在哪一區？',x:'民眾問你：臺北101位於哪一個行政區？',quiz:true,answer:'信義區',c:[['信義區','quiz',0,0,0],['松山區','quiz',0,0,0],['大安區','quiz',0,0,0],['中正區','quiz',0,0,0]]},
+{t:'地方知識考驗：西門紅樓在哪一區？',x:'文化行程中被問到：西門紅樓位於臺北市哪一區？',quiz:true,answer:'萬華區',c:[['萬華區','quiz',0,0,0],['大同區','quiz',0,0,0],['中正區','quiz',0,0,0],['士林區','quiz',0,0,0]]}
+];
 const verified2026Extra=[
 {real:true,date:'2026/09/20',t:'候選人形象與認知戰攻防',x:'選戰升溫，雙方就候選人形象、競選操作與市政表現隔空交鋒。',src:'中央社',url:'https://www.cna.com.tw/news/aipl/202609200159.aspx',icon:'⚔️📰',c:[['回到市政與政策主軸','policy',80000,2,5],['正面回應競選操作質疑','news',70000,5,2],['強力反擊對手說法','attack',50000,8,-3]]},
 {real:true,date:'2026/09/19',t:'媒體專訪安排引發討論',x:'候選人的媒體專訪與節目通告安排受到討論，是否接受同台或專訪成為選戰話題。',src:'中央社',url:'https://www.cna.com.tw/news/aloc/202609190106.aspx',icon:'🎙️📺',c:[['接受公開專訪說明政見','news',90000,6,5],['安排雙方同台對談','debate',140000,8,4],['維持既定媒體節奏','none',0,-1,1]]},
@@ -141,6 +148,7 @@ function resetGame(){
   let currentYearReal=[...realEvents,...verified2026Extra];
   let historical=[...officeEvents()];
   let fictional=[...events];
+  if((document.getElementById('office')||{}).value==='台北市長') fictional.push(...localKnowledgeEvents);
   let pool=mode&&mode.value==='real'?[...currentYearReal,...historical,...fictional]:[...currentYearReal,...fictional];
   // Fisher-Yates: every new game gets a genuinely reshuffled daily-event order.
   for(let i=pool.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]]}
@@ -189,6 +197,10 @@ function showEvent(e,isSudden){
  if(eventText)eventText.innerHTML=(isSudden?'<span class="realbadge">突發事件</span><br>':'')+(e.real?`<span class="realbadge">真實事件 · ${e.date}</span><br>`:'')+e.x+(e.real?`<div class="source">史實摘要來源：<a href="${e.url}" target="_blank" rel="noopener">${e.src}</a><br>以下選項與數值為遊戲模擬，不代表真實票效。</div>`:'');
  if(!choices)return;
  choices.innerHTML='';
+ if(e.quiz){
+   [...e.c].sort(()=>Math.random()-.5).forEach(c=>{let x=document.createElement('button');x.className='choice';x.textContent=c[0];x.onclick=()=>resolveKnowledge(c[0],e);choices.appendChild(x)});
+   return;
+ }
  // 同一事件再次出現時，選項文字也會變化，避免像固定題庫。
  const optionVariants={
   news:['召開記者會完整說明','接受媒體專訪正面回應','公布說明稿與相關資料','由競選團隊公開回應'],
@@ -215,6 +227,15 @@ function showEvent(e,isSudden){
  }).sort((a,b)=>a.sort-b.sort);
  S.optionShuffleSeed=(S.optionShuffleSeed||0)+1;
  shuffled.forEach(o=>{let x=document.createElement('button');x.className='choice';x.textContent=o.label;x.disabled=S.money<o.c[2];x.onclick=()=>resolveDecision(o.c,e,isSudden,o.label);choices.appendChild(x)});
+}
+function resolveKnowledge(choice,e){
+ const before={a:S.a,b:S.b,c:S.c},ok=choice===e.answer;
+ let v=ok?(0.8+Math.random()*.8):(-0.8-Math.random()*.9);
+ applyPollImpact(v);S.favor=clamp(S.favor+(ok?3:-2),0,100);
+ const ch=document.getElementById('choices');
+ if(ch)ch.innerHTML='<div class="battleWait"><b style="font-size:20px">'+(ok?'回答正確':'回答錯誤')+'</b><br><br>你的答案：<b>'+choice+'</b><br>正確答案：<b>'+e.answer+'</b><br><br><button class="primary" style="width:100%" onclick="endDay()">確認，進入下一天</button></div>';
+ addLog('<b>第 '+(TOTAL_DAYS+1-S.day)+' 天｜地方知識：'+e.t+'</b><br>回答：'+choice+'｜正確答案：'+e.answer+'｜'+(ok?'答對':'答錯')+'<br>模擬支持率：'+pollLine(before));
+ try{render()}catch(_){}
 }
 function decisionReason(c,v){let p=[];if(c[3]>=7)p.push('提高曝光與議題聲量');else if(c[3]<=-2)p.push('降低媒體與社群聲量');if(c[4]>=5)p.push('強化好感與信任');else if(c[4]<=-3)p.push('引發部分選民反感');if(c[0].includes('公開')||c[0].includes('更正')||c[0].includes('查核'))p.push('資訊透明降低爭議的不確定性');if(c[0].includes('攻擊')||c[0].includes('反擊')||c[0].includes('堅持'))p.push('強硬攻防增加注意力，但也有反噬風險');if(!p.length)p.push(v>=0?'整體模擬反應略偏正面':'整體模擬反應略偏負面');return p.join('，')+'。'}
 function applyPollImpact(v){let q={a:S.a,b:S.b,c:S.c};
