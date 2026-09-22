@@ -8,7 +8,7 @@
 <div class='card event'><h2 id='eventTitle'>今日事件</h2><div id='eventVisual' class='eventVisual'>🗳️</div><div id='eventText'>每天會自動進入新聞事件；部分日子可能追加突發事件。</div><button id='drawEventBtn' class='primary' style='display:none' onclick='drawTodayEvent()'>抽取今日事件</button><div id='choices' style='margin-top:12px'></div></div>
 <div class='card'><h2>今日競選活動</h2><div class='muted'>每天只能選一種行動：競選活動、休息，或籌措資金。事件選項中也會保留不花錢的處理方式。</div><div class='activityGrid' id='activityGrid' style='margin-top:10px'></div><div class='activityGrid' style='margin-top:8px'><button class='activity' id='restBtn' onclick="dailyPause('rest')"><b>休息一天</b><small>不花錢、不做活動，直接進入今日事件</small></button><button class='activity' id='fundBtn' onclick="dailyPause('fund')"><b>籌措資金</b><small>放棄今天的競選活動，募集一筆競選資金</small></button></div></div>
 <div class='card'><h2>站台安排</h2><div class='muted'>人物皆為虛構角色。站台效果取決於目前選情與活動類型。</div><div class='activityGrid' id='endorserGrid' style='margin-top:10px'></div></div>
-<div class='card'><h2>自訂特殊事件</h2><div class='muted'>加入自己的虛構攻防或突發事件，選擇傳播管道。</div><div class='custom' style='margin-top:10px'><input id='customName' placeholder='例如：政策文件遭質疑'><select id='customType'><option>政策攻防</option><option>爭議事件</option><option>正面政績</option><option>失言危機</option><option>突發事件</option><option>負面新聞</option></select><select id='channel'><option>Threads</option><option>Facebook</option><option>YouTube</option><option>新聞媒體</option><option>記者會</option><option>電話接觸</option><option>街頭活動</option></select><select id='tone'><option value='attack'>攻擊對手</option><option value='defend'>防守澄清</option><option value='positive'>正面宣傳</option></select></div><button id='customEventBtn' class='primary' style='margin-top:10px' onclick='customEvent(this)'>發動事件</button></div></section>
+<div class='card'><h2>自訂特殊事件</h2><div class='muted'>加入自己的虛構攻防或突發事件。選擇攻擊對手／負面新聞時，有機會直接引發剪刀石頭布或比大小。</div><div class='custom' style='margin-top:10px'><input id='customName' placeholder='例如：政策文件遭質疑'><select id='customType'><option>政策攻防</option><option>爭議事件</option><option>正面政績</option><option>失言危機</option><option>突發事件</option><option>負面新聞</option></select><select id='channel'><option>Threads</option><option>Facebook</option><option>YouTube</option><option>新聞媒體</option><option>記者會</option><option>電話接觸</option><option>街頭活動</option></select><select id='tone'><option value='attack'>攻擊對手</option><option value='defend'>防守澄清</option><option value='positive'>正面宣傳</option></select></div><button id='customEventBtn' class='primary' style='margin-top:10px' onclick='customEvent(this)'>發動事件</button></div></section>
 <aside><div class='card'><h2>今日選情分析</h2><div class='muted'>依目前遊戲內的模擬支持率、聲量與好感分析，不代表真實民調。</div><button class='primary' style='width:100%;margin-top:10px' onclick='analyzeToday()'>分析今天的選情</button><div id='todayAnalysis' style='margin-top:12px;line-height:1.7'></div></div>
 <div class='card'><h2>平台訊號</h2><div class='poll'><span>Threads</span><b id='threads'>A 46 · B 54</b></div><div class='poll'><span>Facebook</span><b id='fb'>A 43 · B 44</b></div><div class='poll'><span>YouTube</span><b id='yt'>A 48 · B 45</b></div><div class='poll'><span>電話民調</span><b id='phone'>A 42 · B 40</b></div><div class='poll'><span>街頭接觸</span><b id='street'>A 45 · B 42</b></div><p class='muted'>各平台樣本不同，數字故意可能互相矛盾。</p></div>
 <div class='card'><h2>競選財務</h2><div class='cashrow'><span>今日自發小額捐款</span><b class='good' id='dailyDonate'>$0</b></div><div class='cashrow'><span>今日活動收入</span><b class='good' id='activityIncome'>$0</b></div><div class='cashrow'><span>今日支出</span><b class='danger' id='todaySpent'>$0</b></div><p class='muted'>自發捐款每日自動入帳，受支持者熱度、好感與近期事件影響。</p></div>
@@ -337,12 +337,15 @@ function customEvent(btn){
   nameEl.value='';
   render();
   toastMsg('發動完成：'+outcome);
-  if(t==='attack'&&!S.eventActive&&Math.random()<(.18+Math.random()*.37)){
-    setTimeout(()=>{
-      let counter={t:N.opp+'立即反擊你的攻勢',x:'你主動發動攻擊後，對手迅速回擊，形成突發攻防。',icon:'⚔️',real:false};
-      rpsBattle(counter);
-      addLog(`<b>第 ${TOTAL_DAYS+1-S.day} 天｜攻擊引發突發反擊</b><br>${N.opp} 對你的攻勢做出回擊，進入攻防小遊戲。`);
-    },450);
+  if(t==='attack'){
+    let trigger=.45+Math.random()*.40;
+    if(Math.random()<trigger){
+      setTimeout(()=>{
+        let counter={t:name+'引發即時攻防',x:'你主動發動「'+name+'」後，'+N.opp+'立即回擊。這次攻勢進入攻防小遊戲。',icon:'⚔️',real:false};
+        rpsBattle(counter);
+        addLog(`<b>第 ${TOTAL_DAYS+1-S.day} 天｜自訂攻擊引發攻防</b><br>你發動：${name}<br>${N.opp} 立即反擊，請選擇攻防預算後進行剪刀石頭布或比大小。`);
+      },300+Math.floor(Math.random()*700));
+    }
   }
  }catch(err){alert('發動事件發生錯誤：'+err.message);console.error(err)}finally{if(btn){btn.disabled=false;btn.textContent='發動事件'}}
 }
