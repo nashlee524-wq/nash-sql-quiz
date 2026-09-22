@@ -187,10 +187,10 @@ function applyPollImpact(v){let q={a:S.a,b:S.b,c:S.c};
  let t=S.a+S.b+(N.third?S.c:0);if(t>94){let k=94/t;S.a*=k;S.b*=k;if(N.third)S.c*=k}
  S.und=100-S.a-S.b-(N.third?S.c:0);return q}
 function pollLine(q){return `${N.me} ${q.a.toFixed(1)}% → ${S.a.toFixed(1)}% (${fmt(S.a-q.a)}%)｜${N.opp} ${q.b.toFixed(1)}% → ${S.b.toFixed(1)}% (${fmt(S.b-q.b)}%)${N.third?'｜'+N.third+' '+q.c.toFixed(1)+'% → '+S.c.toFixed(1)+'% ('+fmt(S.c-q.c)+'%)':''}`}
-function isAttackEvent(e){return /攻擊|質疑|爭議|查核|失言|假訊息|傳聞|抄襲|抗議|攻防|反擊/.test((e.t||'')+' '+(e.x||''))}
+function isAttackEvent(e){return /攻擊|質疑|爭議|查核|失言|假訊息|傳聞|抄襲|抗議|攻防|反擊|負面|醜聞|爆料|抹黑|批評|指控/.test((e.t||'')+' '+(e.x||''))}
 function rpsName(x){return x==='rock'?'石頭':x==='paper'?'布':'剪刀'}
 function rpsBattle(e){
- S.eventActive=true;drawEventBtn.style.display='none';
+ S.eventActive=true;const drawEventBtn=document.getElementById('drawEventBtn'),eventTitle=document.getElementById('eventTitle'),eventVisual=document.getElementById('eventVisual'),eventText=document.getElementById('eventText'),choices=document.getElementById('choices');if(drawEventBtn)drawEventBtn.style.display='none';
  eventTitle.textContent=`第 ${TOTAL_DAYS+1-S.day} 天 · 突發攻擊 · 剪刀石頭布`;
  eventVisual.innerHTML=sceneFor({t:'候選人攻防',x:'攻擊 爭議'});
  eventText.innerHTML=`<span class="realbadge">對手攻擊</span><br>${N.opp} 對你發動攻勢：${e.t}<br><br><b>用剪刀石頭布決定這次攻防結果。</b><div class="muted">投入 30 萬以下：剪刀石頭布　投入 30 萬以上：改玩比大小；50 萬在比大小有額外優勢</div>`;
@@ -226,7 +226,26 @@ function numberBattle(e,budget){
  eventText.innerHTML=`投入較高攻防預算，進入 <b>比大小</b><br><br>你：<b>${me}</b>　${N.opp}：<b>${opp}</b><br><br><b>${result}</b>`;
  choices.innerHTML='';render();setTimeout(endDay,900);
 }
-function resolveDecision(c,e,isSudden){if(!spend(c[2]))return;S.buzz=clamp(S.buzz+c[3]+rnd(3),0,100);S.favor=clamp(S.favor+c[4]+rnd(2),0,100);let v=(c[4]*.12+c[3]*.04)+rnd(.8),q=applyPollImpact(v);addLog(`<b>第 ${TOTAL_DAYS+1-S.day} 天｜${isSudden?'突發事件':'主要事件'}：${e.t}</b><br>決策：${c[0]}<br>原因：${decisionReason(c,v)}<br>模擬支持率：${pollLine(q)}`);render();choices.innerHTML='';if(!isSudden&&Math.random()<.25){setTimeout(()=>{let e2=pickEvent();if(isAttackEvent(e2)){rpsBattle(e2);addLog(`<b>第 ${TOTAL_DAYS+1-S.day} 天｜對手突發攻擊</b><br>${e2.t}｜進入剪刀石頭布攻防。`)}else{showEvent(e2,true);addLog(`<b>第 ${TOTAL_DAYS+1-S.day} 天｜突發事件發生</b><br>${e2.t}`)}},350)}else setTimeout(endDay,350)}
+function resolveDecision(c,e,isSudden){
+ if(!spend(c[2]))return;
+ S.buzz=clamp(S.buzz+c[3]+rnd(3),0,100);S.favor=clamp(S.favor+c[4]+rnd(2),0,100);
+ let v=(c[4]*.12+c[3]*.04)+rnd(.8),q=applyPollImpact(v);
+ addLog(`<b>第 ${TOTAL_DAYS+1-S.day} 天｜${isSudden?'突發事件':'主要事件'}：${e.t}</b><br>決策：${c[0]}<br>原因：${decisionReason(c,v)}<br>模擬支持率：${pollLine(q)}`);
+ render();const ch=document.getElementById('choices');if(ch)ch.innerHTML='';
+ if(isSudden){setTimeout(endDay,350);return}
+ if(Math.random()<.25){
+  setTimeout(()=>{
+   let e2=pickEvent();
+   // 突發事件中的攻擊、質疑、負面新聞一律進入攻防小遊戲，不再用一般選項。
+   if(isAttackEvent(e2)||/負面新聞|醜聞|爆料|抹黑|攻勢/.test((e2.t||'')+' '+(e2.x||''))){
+    rpsBattle(e2);
+    addLog(`<b>第 ${TOTAL_DAYS+1-S.day} 天｜突發攻擊事件</b><br>${e2.t}｜請先選攻防預算，再進行剪刀石頭布或比大小。`);
+   }else{
+    showEvent(e2,true);addLog(`<b>第 ${TOTAL_DAYS+1-S.day} 天｜突發事件發生</b><br>${e2.t}`);
+   }
+  },350);
+ }else setTimeout(endDay,350);
+}
 function opponentTurn(){
  let before={a:S.a,b:S.b,c:S.c},r=Math.random(),move=0,label='',difficulty=(document.getElementById('difficulty')||{}).value||'normal',mult=difficulty==='hard'?1.45:difficulty==='easy'?.65:1;
  if(r<.18){move=-.8-Math.random()*1.4;label=N.opp+'今日操作失誤';}
