@@ -189,7 +189,32 @@ function showEvent(e,isSudden){
  if(eventText)eventText.innerHTML=(isSudden?'<span class="realbadge">突發事件</span><br>':'')+(e.real?`<span class="realbadge">真實事件 · ${e.date}</span><br>`:'')+e.x+(e.real?`<div class="source">史實摘要來源：<a href="${e.url}" target="_blank" rel="noopener">${e.src}</a><br>以下選項與數值為遊戲模擬，不代表真實票效。</div>`:'');
  if(!choices)return;
  choices.innerHTML='';
- e.c.forEach(c=>{let x=document.createElement('button');x.className='choice';x.textContent=c[0];x.disabled=S.money<c[2];x.onclick=()=>resolveDecision(c,e,isSudden);choices.appendChild(x)});
+ // 同一事件再次出現時，選項文字也會變化，避免像固定題庫。
+ const optionVariants={
+  news:['召開記者會完整說明','接受媒體專訪正面回應','公布說明稿與相關資料','由競選團隊公開回應'],
+  youtube:['拍一支短片直接說明','開直播回答網友問題','用影片整理重點回應','安排線上直播對談'],
+  facebook:['用社群長文完整說明','發布圖卡整理重點','在社群回應主要質疑','透過粉專說明立場'],
+  threads:['在社群即時回應','用短文快速反擊','連發數則貼文說明','直接回應網友質疑'],
+  policy:['提出新的政策版本','公布具體執行方案','補上政策數據與時程','邀請專家共同說明方案'],
+  debate:['要求公開辯論','準備正面交鋒','邀請對手公開對談','在辯論場合完整回應'],
+  attack:['直接質疑對手說法','抓住漏洞強力反擊','要求對手公開說明','把矛頭轉向對手弱點'],
+  fact:['公布資料供外界查核','提出證據逐項澄清','公開原始資料與來源','請第三方協助查證'],
+  street:['親自到現場面對選民','安排街頭說明活動','直接與民眾溝通','走入地方聽取意見'],
+  phone:['啟動組織電話溝通','請地方團隊逐一聯繫','加強支持者聯絡','透過組織系統說明'],
+  rally:['舉辦大型公開活動','安排支持者集會','用大型活動拉高聲量','邀請重要人物共同站台'],
+  none:['暫時觀察輿論變化','先不擴大回應','低調處理等待風向','維持原本選戰節奏']
+ };
+ const shuffled=e.c.map((c,i)=>{
+   const pool=optionVariants[c[1]]||[];
+   let label=c[0];
+   if(pool.length){
+     const seed=((S.day||1)*7+i*3+(S.optionShuffleSeed||0))%pool.length;
+     label=pool[seed];
+   }
+   return {c,label,sort:Math.random()};
+ }).sort((a,b)=>a.sort-b.sort);
+ S.optionShuffleSeed=(S.optionShuffleSeed||0)+1;
+ shuffled.forEach(o=>{let x=document.createElement('button');x.className='choice';x.textContent=o.label;x.disabled=S.money<o.c[2];x.onclick=()=>resolveDecision(o.c,e,isSudden,o.label);choices.appendChild(x)});
 }
 function decisionReason(c,v){let p=[];if(c[3]>=7)p.push('提高曝光與議題聲量');else if(c[3]<=-2)p.push('降低媒體與社群聲量');if(c[4]>=5)p.push('強化好感與信任');else if(c[4]<=-3)p.push('引發部分選民反感');if(c[0].includes('公開')||c[0].includes('更正')||c[0].includes('查核'))p.push('資訊透明降低爭議的不確定性');if(c[0].includes('攻擊')||c[0].includes('反擊')||c[0].includes('堅持'))p.push('強硬攻防增加注意力，但也有反噬風險');if(!p.length)p.push(v>=0?'整體模擬反應略偏正面':'整體模擬反應略偏負面');return p.join('，')+'。'}
 function applyPollImpact(v){let q={a:S.a,b:S.b,c:S.c};
@@ -276,11 +301,11 @@ function numberBattle(e,budget,source='daily',attacker='opp'){
   try{render()}catch(_){};
  },2800+Math.floor(Math.random()*1000));
 }
-function resolveDecision(c,e,isSudden){
+function resolveDecision(c,e,isSudden,displayLabel){
  if(!spend(c[2]))return;
  S.buzz=clamp(S.buzz+c[3]+rnd(3),0,100);S.favor=clamp(S.favor+c[4]+rnd(2),0,100);
  let v=(c[4]*.12+c[3]*.04)+rnd(.8),q=applyPollImpact(v);
- addLog(`<b>第 ${TOTAL_DAYS+1-S.day} 天｜${isSudden?'突發事件':'主要事件'}：${e.t}</b><br>決策：${c[0]}<br>原因：${decisionReason(c,v)}<br>模擬支持率：${pollLine(q)}`);
+ addLog(`<b>第 ${TOTAL_DAYS+1-S.day} 天｜${isSudden?'突發事件':'主要事件'}：${e.t}</b><br>決策：${displayLabel||c[0]}<br>原因：${decisionReason(c,v)}<br>模擬支持率：${pollLine(q)}`);
  render();const ch=document.getElementById('choices');if(ch)ch.innerHTML='';
  if(isSudden){setTimeout(endDay,350);return}
  let surpriseChance=.10+Math.random()*.45;
