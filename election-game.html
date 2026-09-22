@@ -131,9 +131,9 @@ function startGame(){try{
   N.opp=document.getElementById('oppName').value.trim()||'候選人 B';
   N.third=document.getElementById('thirdName').value.trim();
   N.mePhoto=photoData('myPrev');N.oppPhoto=photoData('oppPrev');N.thirdPhoto=photoData('thirdPrev');
+  const setupEl=document.getElementById('setup');if(setupEl)setupEl.style.display='none';
   resetGame();
-  document.getElementById('setup').style.display='none';
-}catch(err){alert('開始競選時發生錯誤：'+err.message);console.error(err)}}
+}catch(err){const setupEl=document.getElementById('setup');if(setupEl)setupEl.style.display='flex';alert('開始競選時發生錯誤：'+err.message);console.error(err)}}
 function resetGame(){
   let hasC=!!N.third;
   const mode=document.getElementById('gameMode');
@@ -164,7 +164,17 @@ function rnd(n=1){return (Math.random()*2-1)*n}function clamp(v,a,b){return Math
 function addLog(x){const el=document.getElementById('log');if(el)el.innerHTML=`<div>${x}</div>`+el.innerHTML}
 function spend(n){if(S.money<n){toastMsg('預算不足：目前 '+cash(S.money)+'，需要 '+cash(n));return false}S.money-=n;S.spent+=n;S.todaySpent+=n;return true}
 function earn(n,why){S.money+=n;S.raised+=n;S.todayIncome+=n;addLog(`${why}收入 ${cash(n)}。`)}
-function prepareDay(){if(S.over)return;S.eventActive=false;const title=document.getElementById('eventTitle'),visual=document.getElementById('eventVisual'),txt=document.getElementById('eventText'),ch=document.getElementById('choices'),btn=document.getElementById('drawEventBtn');title.textContent=`第 ${TOTAL_DAYS+1-S.day} 天 · 新聞事件即將發生`;visual.innerHTML=sceneFor({t:'新聞事件',x:''});txt.innerHTML='新的一天開始，正在進入今日選戰事件…';ch.innerHTML='';btn.style.display='none';setTimeout(()=>{if(!S.over&&!S.eventActive)showEvent(pickEvent(),false)},450)} 天 · 等待抽取事件`;eventVisual.textContent='🗳️';eventText.innerHTML='新的一天開始後會自動進入今日事件。';choices.innerHTML='';drawEventBtn.style.display='inline-block'}
+function prepareDay(){
+ if(S.over)return;
+ S.eventActive=false;
+ const title=document.getElementById('eventTitle'),visual=document.getElementById('eventVisual'),txt=document.getElementById('eventText'),ch=document.getElementById('choices'),btn=document.getElementById('drawEventBtn');
+ if(title)title.textContent=`第 ${TOTAL_DAYS+1-S.day} 天 · 新聞事件即將發生`;
+ if(visual)visual.innerHTML=sceneFor({t:'新聞事件',x:''});
+ if(txt)txt.innerHTML='新的一天開始，正在進入今日選戰事件…';
+ if(ch)ch.innerHTML='';
+ if(btn)btn.style.display='none';
+ setTimeout(()=>{if(!S.over&&!S.eventActive)showEvent(pickEvent(),false)},450);
+}
 function pickEvent(){let e=S.eventQueue.shift()||events[Math.floor(Math.random()*events.length)];return gameEvent(e)}
 function drawTodayEvent(){if(S.over||S.eventActive)return;showEvent(pickEvent(),false)}
 function showEvent(e,isSudden){S.eventActive=true;drawEventBtn.style.display='none';eventTitle.textContent=`第 ${TOTAL_DAYS+1-S.day} 天 · ${isSudden?'突發事件':'主要事件'} · ${e.t}`;eventVisual.innerHTML=sceneFor(e);eventSound(isSudden);eventText.innerHTML=(isSudden?'<span class="realbadge">突發事件</span><br>':'')+(e.real?`<span class="realbadge">真實事件 · ${e.date}</span><br>`:'')+e.x+(e.real?`<div class="source">史實摘要來源：<a href="${e.url}" target="_blank" rel="noopener">${e.src}</a><br>以下選項與數值為遊戲模擬，不代表真實票效。</div>`:'');choices.innerHTML='';e.c.forEach(c=>{let x=document.createElement('button');x.className='choice';x.textContent=c[0];x.disabled=S.money<c[2];x.onclick=()=>resolveDecision(c,e,isSudden);choices.appendChild(x)})}
