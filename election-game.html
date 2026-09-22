@@ -229,23 +229,29 @@ function rpsBattle(e,source='daily',attacker='opp'){
  if(source==='custom')setTimeout(()=>host.scrollIntoView({behavior:'smooth',block:'center'}),50);
 }
 function closeBattleResult(source='daily'){
+ S.waitingBattleConfirm=false;
  const host=battleHost(source);
  if(host)host.innerHTML='';
- S.eventActive=false;
- if(source==='daily')endDay();
- else toastMsg('攻防結果已確認');
+ if(source==='daily'){
+   // 每日突發攻防只有玩家按下確認後才允許換日。
+   endDay();
+ }else{
+   S.eventActive=false;
+   toastMsg('攻防結果已確認');
+ }
 }
 function resolveRps(me,e,source='daily',attacker='opp'){
  const host=battleHost(source),budgetEl=document.getElementById(source==='custom'?'customAttackBudget':'attackBudget'),budget=budgetEl?parseInt(budgetEl.value)||0:0;
  if(budget>=300000)return startNumberBattle(e,source,attacker);if(budget&&!spend(budget))return;
  const before={a:S.a,b:S.b,c:S.c},opts=['rock','paper','scissors'];
- host.innerHTML=waitHtml(N.opp+' 正在出拳');
+ host.innerHTML=waitHtml(N.opp+' 出招中');
  setTimeout(()=>{
   let opp=opts[Math.floor(Math.random()*3)],win=(me==='rock'&&opp==='scissors')||(me==='paper'&&opp==='rock')||(me==='scissors'&&opp==='paper'),tie=me===opp,v=0,result='';
   if(tie){v=rnd(.25);result='平手，這次攻防沒有明顯效果';}
   else if(win){v=1.1+Math.random()*1.3;result=attacker==='me'?'你的攻擊成功':'你成功化解對方攻擊';S.favor=clamp(S.favor+2,0,100);}
   else{v=-1.1-Math.random()*1.5;result=attacker==='me'?'你的攻擊被對手擋下':'對方攻擊奏效';S.favor=clamp(S.favor-2,0,100);}
   applyPollImpact(v);
+  S.waitingBattleConfirm=true;
   host.innerHTML='<div class="battleWait"><div style="font-size:18px;margin-bottom:10px"><b>剪刀石頭布結果</b></div>你出 <b>'+rpsName(me)+'</b>　'+N.opp+' 出 <b>'+rpsName(opp)+'</b><br><br><div style="font-size:22px"><b>'+result+'</b></div><button class="primary" style="width:100%;margin-top:16px" onclick="closeBattleResult(\''+source+'\')">'+(source==='daily'?'確認結果，進入下一天':'確認結果')+'</button></div>';
   addLog(`<b>第 ${TOTAL_DAYS+1-S.day} 天｜攻防：${e.t}</b><br>模式：剪刀石頭布｜你：${rpsName(me)}｜${N.opp}：${rpsName(opp)}<br>結果：${result}<br>模擬支持率：${pollLine(before)}`);
   try{render()}catch(_){};
@@ -257,13 +263,14 @@ function startNumberBattle(e,source='daily',attacker='opp'){
 }
 function numberBattle(e,budget,source='daily',attacker='opp'){
  const host=battleHost(source),before={a:S.a,b:S.b,c:S.c};
- host.innerHTML=waitHtml(N.opp+' 正在抽取數字');
+ host.innerHTML=waitHtml(N.opp+' 出招中');
  setTimeout(()=>{
   let bonus=budget>=500000?2:1,me=Math.floor(Math.random()*10)+1+bonus,opp=Math.floor(Math.random()*10)+1,win=me>opp,tie=me===opp,v=0,result='';
   if(tie){v=rnd(.2);result='雙方數字相同，攻防打平';}
   else if(win){v=1.2+Math.random()*1.5;result=attacker==='me'?'你的攻擊成功':'你成功守住這次攻擊';S.favor=clamp(S.favor+2,0,100);}
   else{v=-.8-Math.random()*1.2;result=attacker==='me'?'對手成功擋下你的攻擊':'對方攻擊奏效';S.favor=clamp(S.favor-1.5,0,100);}
   applyPollImpact(v);
+  S.waitingBattleConfirm=true;
   host.innerHTML='<div class="battleWait"><div style="font-size:18px;margin-bottom:10px"><b>比大小結果</b></div>你抽到 <b style="font-size:26px">'+me+'</b>　'+N.opp+' 抽到 <b style="font-size:26px">'+opp+'</b><br><br><div style="font-size:22px"><b>'+result+'</b></div><button class="primary" style="width:100%;margin-top:16px" onclick="closeBattleResult(\''+source+'\')">'+(source==='daily'?'確認結果，進入下一天':'確認結果')+'</button></div>';
   addLog(`<b>第 ${TOTAL_DAYS+1-S.day} 天｜攻防：${e.t}</b><br>模式：比大小｜你：${me}｜${N.opp}：${opp}<br>結果：${result}<br>模擬支持率：${pollLine(before)}`);
   try{render()}catch(_){};
@@ -297,7 +304,7 @@ function opponentTurn(){
  S.und=100-S.a-S.b-(N.third?S.c:0);
  addLog(`<b>對手回合｜${label}</b><br>${N.opp} ${before.b.toFixed(1)}% → ${S.b.toFixed(1)}% (${fmt(S.b-before.b)}%)｜${N.me} ${before.a.toFixed(1)}% → ${S.a.toFixed(1)}% (${fmt(S.a-before.a)}%)`);
 }
-function endDay(){S.eventActive=false;opponentTurn();S.day--;S.activityUsed=false;S.todaySpent=0;S.todayIncome=0;let d=spontaneousDonation();addLog(`第 ${TOTAL_DAYS-S.day} 天結束｜小額捐款 ${cash(d)} 入帳。<br>日終模擬支持率：${N.me} ${S.a.toFixed(1)}%｜${N.opp} ${S.b.toFixed(1)}%${N.third?'｜'+N.third+' '+S.c.toFixed(1)+'%':''}`);if(S.day<=0){finish();return}prepareDay();render()}
+function endDay(){if(S.waitingBattleConfirm)return;S.eventActive=false;opponentTurn();S.day--;S.activityUsed=false;S.todaySpent=0;S.todayIncome=0;let d=spontaneousDonation();addLog(`第 ${TOTAL_DAYS-S.day} 天結束｜小額捐款 ${cash(d)} 入帳。<br>日終模擬支持率：${N.me} ${S.a.toFixed(1)}%｜${N.opp} ${S.b.toFixed(1)}%${N.third?'｜'+N.third+' '+S.c.toFixed(1)+'%':''}`);if(S.day<=0){finish();return}prepareDay();render()}
 function buildActivities(){activityGrid.innerHTML='';activities.forEach((a,i)=>{let b=document.createElement('button');b.className='activity';b.id='act'+i;b.innerHTML=`<b>${a[0]}</b><small>支出 ${cash(a[1])}${a[2]?' · 可能帶入募款':''}</small><small>${a[3]}</small>`;b.onclick=()=>doActivity(i);activityGrid.appendChild(b)});endorserGrid.innerHTML='';endorsers.forEach((a,i)=>{let b=document.createElement('button');b.className='activity';b.id='end'+i;b.innerHTML=`<b>${a[0]}站台</b><small>活動成本 ${cash(a[1])}</small><small>${a[2]} · ${a[3]}</small>`;b.onclick=()=>doEndorser(i);endorserGrid.appendChild(b)})}
 function dailyPause(type){
  if(S.over||S.activityUsed)return toastMsg('今天已經安排過行動');
