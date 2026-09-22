@@ -8,7 +8,7 @@
 <div class='card event'><h2 id='eventTitle'>今日事件</h2><div id='eventVisual' class='eventVisual'>🗳️</div><div id='eventText'>每天會自動進入新聞事件；部分日子可能追加突發事件。</div><button id='drawEventBtn' class='primary' style='display:none' onclick='drawTodayEvent()'>抽取今日事件</button><div id='choices' style='margin-top:12px'></div></div>
 <div class='card'><h2>今日競選活動</h2><div class='muted'>每天只能選一種行動：競選活動、休息，或籌措資金。事件選項中也會保留不花錢的處理方式。</div><div class='activityGrid' id='activityGrid' style='margin-top:10px'></div><div class='activityGrid' style='margin-top:8px'><button class='activity' id='restBtn' onclick="dailyPause('rest')"><b>休息一天</b><small>不花錢、不做活動，直接進入今日事件</small></button><button class='activity' id='fundBtn' onclick="dailyPause('fund')"><b>籌措資金</b><small>放棄今天的競選活動，募集一筆競選資金</small></button></div></div>
 <div class='card'><h2>站台安排</h2><div class='muted'>人物皆為虛構角色。站台效果取決於目前選情與活動類型。</div><div class='activityGrid' id='endorserGrid' style='margin-top:10px'></div></div>
-<div class='card'><h2>自訂特殊事件</h2><div class='muted'>所有自訂事件都有機會升級成攻防小遊戲；攻擊對手／負面新聞的觸發機率較高。觸發後依投入預算玩剪刀石頭布或比大小。</div><div class='custom' style='margin-top:10px'><input id='customName' placeholder='例如：政策文件遭質疑'><select id='customType'><option>政策攻防</option><option>爭議事件</option><option>正面政績</option><option>失言危機</option><option>突發事件</option><option>負面新聞</option></select><select id='channel'><option>Threads</option><option>Facebook</option><option>YouTube</option><option>新聞媒體</option><option>記者會</option><option>電話接觸</option><option>街頭活動</option></select><select id='tone'><option value='attack'>攻擊對手</option><option value='defend'>防守澄清</option><option value='positive'>正面宣傳</option></select></div><button id='customEventBtn' class='primary' style='margin-top:10px' onclick='customEvent(this)'>發動事件</button></div></section>
+<div class='card'><h2>自訂特殊事件</h2><div class='muted'>發動自訂事件後會直接進入攻防小遊戲；依投入預算玩剪刀石頭布或比大小。</div><div class='custom' style='margin-top:10px'><input id='customName' placeholder='例如：政策文件遭質疑'><select id='customType'><option>政策攻防</option><option>爭議事件</option><option>正面政績</option><option>失言危機</option><option>突發事件</option><option>負面新聞</option></select><select id='channel'><option>Threads</option><option>Facebook</option><option>YouTube</option><option>新聞媒體</option><option>記者會</option><option>電話接觸</option><option>街頭活動</option></select><select id='tone'><option value='attack'>攻擊對手</option><option value='defend'>防守澄清</option><option value='positive'>正面宣傳</option></select></div><button id='customEventBtn' class='primary' style='margin-top:10px' onclick='customEvent(this)'>發動事件</button></div></section>
 <aside><div class='card'><h2>今日選情分析</h2><div class='muted'>依目前遊戲內的模擬支持率、聲量與好感分析，不代表真實民調。</div><button class='primary' style='width:100%;margin-top:10px' onclick='analyzeToday()'>分析今天的選情</button><div id='todayAnalysis' style='margin-top:12px;line-height:1.7'></div></div>
 <div class='card'><h2>平台訊號</h2><div class='poll'><span>Threads</span><b id='threads'>A 46 · B 54</b></div><div class='poll'><span>Facebook</span><b id='fb'>A 43 · B 44</b></div><div class='poll'><span>YouTube</span><b id='yt'>A 48 · B 45</b></div><div class='poll'><span>電話民調</span><b id='phone'>A 42 · B 40</b></div><div class='poll'><span>街頭接觸</span><b id='street'>A 45 · B 42</b></div><p class='muted'>各平台樣本不同，數字故意可能互相矛盾。</p></div>
 <div class='card'><h2>競選財務</h2><div class='cashrow'><span>今日自發小額捐款</span><b class='good' id='dailyDonate'>$0</b></div><div class='cashrow'><span>今日活動收入</span><b class='good' id='activityIncome'>$0</b></div><div class='cashrow'><span>今日支出</span><b class='danger' id='todaySpent'>$0</b></div><p class='muted'>自發捐款每日自動入帳，受支持者熱度、好感與近期事件影響。</p></div>
@@ -137,12 +137,13 @@ function startGame(){try{
 function resetGame(){
   let hasC=!!N.third;
   const mode=document.getElementById('gameMode');
-  let currentYearReal=[...realEvents,...verified2026Extra].sort(()=>Math.random()-.5);
-  let firstTen=currentYearReal.slice(0,Math.min(10,TOTAL_DAYS));
-  let used=new Set(firstTen);
-  let remainingReal=[...currentYearReal.filter(e=>!used.has(e)),...officeEvents()].sort(()=>Math.random()-.5);
-  let fictional=[...events].sort(()=>Math.random()-.5);
-  let q=mode&&mode.value==='real'?[...firstTen,...remainingReal,...fictional]:[...firstTen,...fictional];
+  let currentYearReal=[...realEvents,...verified2026Extra];
+  let historical=[...officeEvents()];
+  let fictional=[...events];
+  let pool=mode&&mode.value==='real'?[...currentYearReal,...historical,...fictional]:[...currentYearReal,...fictional];
+  // Fisher-Yates: every new game gets a genuinely reshuffled daily-event order.
+  for(let i=pool.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]]}
+  let q=pool;
   let startA,startB,startC,startUnd,startNote;
   if(hasC){
     let pool=[34,33,32].sort(()=>Math.random()-.5);
@@ -157,7 +158,7 @@ function resetGame(){
   }
   S={day:TOTAL_DAYS,money:5000000,raised:0,spent:0,todaySpent:0,todayIncome:0,dailyDonate:0,buzz:50,favor:50,a:startA,b:startB,c:startC,und:startUnd,pending:[],over:false,activityUsed:false,eventQueue:q,eventActive:false};
   document.getElementById('log').innerHTML='';
-  addLog('競選開始｜職務：'+N.office+'｜選戰 '+TOTAL_DAYS+' 天。<br><b>'+startNote+'</b><br>前 10 天固定從 2026 年真實事件池抽取；每天會自動進入今日事件。');
+  addLog('競選開始｜職務：'+N.office+'｜選戰 '+TOTAL_DAYS+' 天。<br><b>'+startNote+'</b><br>每日事件會在每一局開始時重新隨機洗牌；每天會自動進入今日事件。');
   buildActivities();prepareDay();render();
 }
 function rnd(n=1){return (Math.random()*2-1)*n}function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
@@ -332,16 +333,11 @@ function customEvent(btn){
   nameEl.value='';
   render();
   toastMsg('發動完成：'+outcome);
-  {
-    let trigger=(t==='attack'?.55:.30)+Math.random()*(t==='attack'?.35:.30);
-    if(Math.random()<trigger){
-      setTimeout(()=>{
-        let counter={t:name+'引發即時攻防',x:'你發動「'+name+'」後，選戰出現即時攻防。',icon:'⚔️',real:false};
-        rpsBattle(counter);
-        addLog(`<b>第 ${TOTAL_DAYS+1-S.day} 天｜自訂事件引發攻防</b><br>你發動：${name}<br>事件升級，請選擇攻防預算後進行剪刀石頭布或比大小。`);
-      },300+Math.floor(Math.random()*700));
-    }
-  }
+  setTimeout(()=>{
+    let counter={t:name+'即時攻防',x:'你發動「'+name+'」後，事件立即進入攻防小遊戲。',icon:'⚔️',real:false};
+    rpsBattle(counter);
+    addLog(`<b>第 ${TOTAL_DAYS+1-S.day} 天｜自訂事件攻防</b><br>你發動：${name}<br>請選擇攻防預算，再進行剪刀石頭布或比大小。`);
+  },300);
  }catch(err){alert('發動事件發生錯誤：'+err.message);console.error(err)}finally{if(btn){btn.disabled=false;btn.textContent='發動事件'}}
 }
 function finish(){S.over=true;let vals=[{n:N.me,v:S.a},{n:N.opp,v:S.b}];if(N.third)vals.push({n:N.third,v:S.c});let max=Math.max(...vals.map(x=>x.v)),won=S.a===max&&vals.filter(x=>x.v===max).length===1;eventTitle.textContent=won?'🎉 恭喜當選 '+N.office:'開票夜';eventVisual.innerHTML=won?'<div style="font-size:70px;padding:55px">🎆🏆🎊</div>':sceneFor({t:'民調 開票',x:''});if(won){cheer();fireworks();}eventText.innerHTML=`真正支持度揭曉：<br><b style="color:var(--a)">${N.me} ${S.a.toFixed(1)}%</b>　<b style="color:var(--b)">${N.opp} ${S.b.toFixed(1)}%</b>${N.third?'　<b style="color:#b8a7ff">'+N.third+' '+S.c.toFixed(1)+'%</b>':''}　其他/未決定 ${S.und.toFixed(1)}%<br><br>累計募款 ${cash(S.raised)} · 累計支出 ${cash(S.spent)} · 結餘 ${cash(S.money)}`;choices.innerHTML=`<button class="primary" onclick="setup.style.display='flex'">再玩一次</button>`;truth.classList.remove('hiddenVal');addLog((won?'🎉 模擬結果：'+N.me+'當選 '+N.office+'。':'模擬開票結束。')+' 隱藏支持度公開。');render()}
