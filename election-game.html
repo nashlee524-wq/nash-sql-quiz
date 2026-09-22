@@ -212,6 +212,14 @@ function rpsBattle(e){
  function refreshAttackGame(){action.innerHTML='';let amt=parseInt(budget.value)||0;if(amt>=300000){let b=document.createElement('button');b.className='choice';b.textContent='開始比大小';b.onclick=()=>startNumberBattle(e);action.appendChild(b)}else{[['rock','✊ 石頭'],['paper','✋ 布'],['scissors','✌️ 剪刀']].forEach(([v,label])=>{let b=document.createElement('button');b.className='choice';b.textContent=label;b.onclick=()=>resolveRps(v,e);action.appendChild(b)})}}
  budget.onchange=refreshAttackGame;refreshAttackGame();
  eventSound(true);
+ // 攻防遊戲是在頁面上方的「今日事件」卡片，從自訂事件區按下時要自動捲回去，否則手機看起來像沒有跳出來。
+ const battleCard=eventTitle.closest('.card');
+ if(battleCard){
+   setTimeout(()=>battleCard.scrollIntoView({behavior:'smooth',block:'start'}),50);
+   battleCard.style.boxShadow='0 0 0 2px #ffc857,0 12px 36px #0008';
+   setTimeout(()=>battleCard.style.boxShadow='',1800);
+ }
+ toastMsg('攻防遊戲已開始');
 }
 function resolveRps(me,e){
  let budgetEl=document.getElementById('attackBudget'),budget=budgetEl?parseInt(budgetEl.value)||0:0;if(budget>=300000)return startNumberBattle(e);if(budget&&!spend(budget))return;
