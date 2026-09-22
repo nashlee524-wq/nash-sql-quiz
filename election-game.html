@@ -185,13 +185,14 @@ function rpsBattle(e){
  eventVisual.innerHTML=sceneFor({t:'候選人攻防',x:'攻擊 爭議'});
  eventText.innerHTML=`<span class="realbadge">對手攻擊</span><br>${N.opp} 對你發動攻勢：${e.t}<br><br><b>用剪刀石頭布決定這次攻防結果。</b><div class="muted">投入 30 萬以下：剪刀石頭布　投入 30 萬以上：改玩比大小；50 萬在比大小有額外優勢</div>`;
  choices.innerHTML='';
- let budget=document.createElement('select');budget.id='attackBudget';budget.style.width='100%';budget.style.margin='10px 0';budget.innerHTML='<option value="0">不追加攻防預算</option><option value="50000">投入 $50,000</option><option value="150000">投入 $150,000</option><option value="300000">投入 $300,000（比大小）</option><option value="500000">投入 $500,000（比大小・優勢）</option>';choices.appendChild(budget);
- [['rock','✊ 石頭'],['paper','✋ 布'],['scissors','✌️ 剪刀']].forEach(([v,label])=>{let b=document.createElement('button');b.className='choice';b.textContent=label;b.onclick=()=>resolveRps(v,e);choices.appendChild(b)});
+ let budget=document.createElement('select');budget.id='attackBudget';budget.style.width='100%';budget.style.margin='10px 0';budget.innerHTML='<option value="0">不追加預算｜剪刀石頭布</option><option value="50000">投入 $50,000｜剪刀石頭布</option><option value="150000">投入 $150,000｜剪刀石頭布</option><option value="300000">投入 $300,000｜比大小</option><option value="500000">投入 $500,000｜比大小・優勢</option>';choices.appendChild(budget);
+ let action=document.createElement('div');action.id='attackAction';choices.appendChild(action);
+ function refreshAttackGame(){action.innerHTML='';let amt=parseInt(budget.value)||0;if(amt>=300000){let b=document.createElement('button');b.className='choice';b.textContent='開始比大小';b.onclick=()=>startNumberBattle(e);action.appendChild(b)}else{[['rock','✊ 石頭'],['paper','✋ 布'],['scissors','✌️ 剪刀']].forEach(([v,label])=>{let b=document.createElement('button');b.className='choice';b.textContent=label;b.onclick=()=>resolveRps(v,e);action.appendChild(b)})}}
+ budget.onchange=refreshAttackGame;refreshAttackGame();
  eventSound(true);
 }
 function resolveRps(me,e){
- let budgetEl=document.getElementById('attackBudget'),budget=budgetEl?parseInt(budgetEl.value)||0:0;if(budget&&!spend(budget))return;
- if(budget>=300000){return numberBattle(e,budget)}
+ let budgetEl=document.getElementById('attackBudget'),budget=budgetEl?parseInt(budgetEl.value)||0:0;if(budget>=300000)return startNumberBattle(e);if(budget&&!spend(budget))return;
  let opts=['rock','paper','scissors'],opp=opts[Math.floor(Math.random()*3)],win=(me==='rock'&&opp==='scissors')||(me==='paper'&&opp==='rock')||(me==='scissors'&&opp==='paper'),tie=me===opp;
  let before={a:S.a,b:S.b,c:S.c},v=0,result='';
  if(tie){v=rnd(.25);result='平手，攻擊沒有造成明顯效果';}
@@ -202,6 +203,7 @@ function resolveRps(me,e){
  eventText.innerHTML=`你出 <b>${rpsName(me)}</b>，${N.opp} 出 <b>${rpsName(opp)}</b><br><br><b>${result}</b>`;
  choices.innerHTML='';render();setTimeout(endDay,900);
 }
+function startNumberBattle(e){let el=document.getElementById('attackBudget'),budget=el?parseInt(el.value)||0:0;if(budget<300000)return toastMsg('30 萬以下使用剪刀石頭布');if(budget&&!spend(budget))return;numberBattle(e,budget)}
 function numberBattle(e,budget){
  let before={a:S.a,b:S.b,c:S.c};
  let bonus=budget>=500000?2:1,me=Math.floor(Math.random()*10)+1+bonus,opp=Math.floor(Math.random()*10)+1;
