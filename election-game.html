@@ -173,7 +173,7 @@ function prepareDay(){
  if(txt)txt.innerHTML='新的一天開始，正在進入今日選戰事件…';
  if(ch)ch.innerHTML='';
  if(btn)btn.style.display='none';
- setTimeout(()=>{if(!S.over&&!S.eventActive)showEvent(pickEvent(),false)},450);
+ setTimeout(()=>{if(!S.over&&!S.eventActive)showEvent(pickEvent(),false)},250+Math.floor(Math.random()*950));
 }
 function pickEvent(){let e=S.eventQueue.shift()||events[Math.floor(Math.random()*events.length)];return gameEvent(e)}
 function drawTodayEvent(){if(S.over||S.eventActive)return;showEvent(pickEvent(),false)}
@@ -233,7 +233,8 @@ function resolveDecision(c,e,isSudden){
  addLog(`<b>第 ${TOTAL_DAYS+1-S.day} 天｜${isSudden?'突發事件':'主要事件'}：${e.t}</b><br>決策：${c[0]}<br>原因：${decisionReason(c,v)}<br>模擬支持率：${pollLine(q)}`);
  render();const ch=document.getElementById('choices');if(ch)ch.innerHTML='';
  if(isSudden){setTimeout(endDay,350);return}
- if(Math.random()<.25){
+ let surpriseChance=.10+Math.random()*.45;
+ if(Math.random()<surpriseChance){
   setTimeout(()=>{
    let e2=pickEvent();
    // 突發事件中的攻擊、質疑、負面新聞一律進入攻防小遊戲，不再用一般選項。
@@ -336,6 +337,13 @@ function customEvent(btn){
   nameEl.value='';
   render();
   toastMsg('發動完成：'+outcome);
+  if(t==='attack'&&!S.eventActive&&Math.random()<(.18+Math.random()*.37)){
+    setTimeout(()=>{
+      let counter={t:N.opp+'立即反擊你的攻勢',x:'你主動發動攻擊後，對手迅速回擊，形成突發攻防。',icon:'⚔️',real:false};
+      rpsBattle(counter);
+      addLog(`<b>第 ${TOTAL_DAYS+1-S.day} 天｜攻擊引發突發反擊</b><br>${N.opp} 對你的攻勢做出回擊，進入攻防小遊戲。`);
+    },450);
+  }
  }catch(err){alert('發動事件發生錯誤：'+err.message);console.error(err)}finally{if(btn){btn.disabled=false;btn.textContent='發動事件'}}
 }
 function finish(){S.over=true;let vals=[{n:N.me,v:S.a},{n:N.opp,v:S.b}];if(N.third)vals.push({n:N.third,v:S.c});let max=Math.max(...vals.map(x=>x.v)),won=S.a===max&&vals.filter(x=>x.v===max).length===1;eventTitle.textContent=won?'🎉 恭喜當選 '+N.office:'開票夜';eventVisual.innerHTML=won?'<div style="font-size:70px;padding:55px">🎆🏆🎊</div>':sceneFor({t:'民調 開票',x:''});if(won){cheer();fireworks();}eventText.innerHTML=`真正支持度揭曉：<br><b style="color:var(--a)">${N.me} ${S.a.toFixed(1)}%</b>　<b style="color:var(--b)">${N.opp} ${S.b.toFixed(1)}%</b>${N.third?'　<b style="color:#b8a7ff">'+N.third+' '+S.c.toFixed(1)+'%</b>':''}　其他/未決定 ${S.und.toFixed(1)}%<br><br>累計募款 ${cash(S.raised)} · 累計支出 ${cash(S.spent)} · 結餘 ${cash(S.money)}`;choices.innerHTML=`<button class="primary" onclick="setup.style.display='flex'">再玩一次</button>`;truth.classList.remove('hiddenVal');addLog((won?'🎉 模擬結果：'+N.me+'當選 '+N.office+'。':'模擬開票結束。')+' 隱藏支持度公開。');render()}
