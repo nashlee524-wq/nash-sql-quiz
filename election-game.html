@@ -230,8 +230,9 @@ function showEvent(e,isSudden){
 }
 function resolveKnowledge(choice,e){
  const before={a:S.a,b:S.b,c:S.c},ok=choice===e.answer;
- let v=ok?(0.8+Math.random()*.8):(-0.8-Math.random()*.9);
- applyPollImpact(v);S.favor=clamp(S.favor+(ok?3:-2),0,100);
+ // 地方知識題有標準答案：答錯固定扣支持度，不走一般事件的隨機正負結果。
+ let v=ok?(0.8+Math.random()*.8):-2;
+ applyPollImpact(v);S.favor=clamp(S.favor+(ok?3:-3),0,100);
  const ch=document.getElementById('choices');
  if(ch)ch.innerHTML='<div class="battleWait"><b style="font-size:20px">'+(ok?'回答正確':'回答錯誤')+'</b><br><br>你的答案：<b>'+choice+'</b><br>正確答案：<b>'+e.answer+'</b><br><br><button class="primary" style="width:100%" onclick="endDay()">確認，進入下一天</button></div>';
  addLog('<b>第 '+(TOTAL_DAYS+1-S.day)+' 天｜地方知識：'+e.t+'</b><br>回答：'+choice+'｜正確答案：'+e.answer+'｜'+(ok?'答對':'答錯')+'<br>模擬支持率：'+pollLine(before));
