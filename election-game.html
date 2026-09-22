@@ -115,9 +115,9 @@ function sceneFor(e){
  let a=scenes[type];return '<svg viewBox="0 0 400 220" role="img" aria-label="'+a[0]+'" xmlns="http://www.w3.org/2000/svg"><rect width="400" height="220" fill="#101c2d"/>'+a[1]+'<text x="200" y="210" text-anchor="middle" fill="#9fb1c8" font-size="13">'+a[0]+'</text></svg>';
 }
 function iconFor(e){if(e.icon)return e.icon;let t=e.t+e.x;if(/Facebook|臉書|FB/i.test(t))return '📱🟦';if(/Threads|社群|網路|直播/.test(t))return '📱💬';if(/記者會|媒體/.test(t))return '🎙️📸';if(/造勢|晚會|街頭|掃街/.test(t))return '🎤👥';if(/辯論|政見/.test(t))return '📺🗣️';if(/民調/.test(t))return '📊';if(/募款|經費/.test(t))return '💰';if(/爭議|查核|攻擊/.test(t))return '⚠️📰';return '🗳️📣'}
-let audioCtx;function tone(freq=440,dur=.12,type='sine',gain=.05){if(!soundOn.checked)return;try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();let o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type=type;o.frequency.value=freq;g.gain.value=gain;o.connect(g);g.connect(audioCtx.destination);o.start();g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+dur);o.stop(audioCtx.currentTime+dur)}catch(e){}}
+let audioCtx;function tone(freq=440,dur=.12,type='sine',gain=.05){const soundEl=document.getElementById('soundOn');if(soundEl&&!soundEl.checked)return;try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();let o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type=type;o.frequency.value=freq;g.gain.value=gain;o.connect(g);g.connect(audioCtx.destination);o.start();g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+dur);o.stop(audioCtx.currentTime+dur)}catch(e){}}
 function eventSound(sudden){tone(sudden?180:520,.16,sudden?'sawtooth':'sine',.05);setTimeout(()=>tone(sudden?140:700,.16,'sine',.04),130)}
-function cheer(){if(!soundOn.checked)return;[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,.7,'triangle',.07),i*120));for(let i=0;i<12;i++)setTimeout(()=>tone(300+Math.random()*900,.18,'sine',.025),Math.random()*1500)}
+function cheer(){const soundEl=document.getElementById('soundOn');if(soundEl&&!soundEl.checked)return;[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,.7,'triangle',.07),i*120));for(let i=0;i<12;i++)setTimeout(()=>tone(300+Math.random()*900,.18,'sine',.025),Math.random()*1500)}
 function fireworks(){let box=document.createElement('div');box.className='fireworks';document.body.appendChild(box);for(let i=0;i<32;i++){let x=document.createElement('div');x.className='spark';x.textContent=['🎆','✨','🎉','🎊'][i%4];x.style.left=Math.random()*95+'%';x.style.top=(5+Math.random()*75)+'%';x.style.animationDelay=(Math.random()*1.2)+'s';box.appendChild(x)}setTimeout(()=>box.remove(),3500)}
 function cash(n){return '$'+Math.round(n).toLocaleString('zh-TW')}
 function toastMsg(x){const el=document.getElementById('toast');if(!el)return;el.textContent=x;el.style.display='block';clearTimeout(window._tt);window._tt=setTimeout(()=>el.style.display='none',1800)}
@@ -178,7 +178,18 @@ function prepareDay(){
 }
 function pickEvent(){let e=S.eventQueue.shift()||events[Math.floor(Math.random()*events.length)];return gameEvent(e)}
 function drawTodayEvent(){if(S.over||S.eventActive)return;showEvent(pickEvent(),false)}
-function showEvent(e,isSudden){S.eventActive=true;drawEventBtn.style.display='none';eventTitle.textContent=`第 ${TOTAL_DAYS+1-S.day} 天 · ${isSudden?'突發事件':'主要事件'} · ${e.t}`;eventVisual.innerHTML=sceneFor(e);eventSound(isSudden);eventText.innerHTML=(isSudden?'<span class="realbadge">突發事件</span><br>':'')+(e.real?`<span class="realbadge">真實事件 · ${e.date}</span><br>`:'')+e.x+(e.real?`<div class="source">史實摘要來源：<a href="${e.url}" target="_blank" rel="noopener">${e.src}</a><br>以下選項與數值為遊戲模擬，不代表真實票效。</div>`:'');choices.innerHTML='';e.c.forEach(c=>{let x=document.createElement('button');x.className='choice';x.textContent=c[0];x.disabled=S.money<c[2];x.onclick=()=>resolveDecision(c,e,isSudden);choices.appendChild(x)})}
+function showEvent(e,isSudden){
+ S.eventActive=true;
+ const drawEventBtn=document.getElementById('drawEventBtn'),eventTitle=document.getElementById('eventTitle'),eventVisual=document.getElementById('eventVisual'),eventText=document.getElementById('eventText'),choices=document.getElementById('choices');
+ if(drawEventBtn)drawEventBtn.style.display='none';
+ if(eventTitle)eventTitle.textContent=`第 ${TOTAL_DAYS+1-S.day} 天 · ${isSudden?'突發事件':'主要事件'} · ${e.t}`;
+ if(eventVisual)eventVisual.innerHTML=sceneFor(e);
+ eventSound(isSudden);
+ if(eventText)eventText.innerHTML=(isSudden?'<span class="realbadge">突發事件</span><br>':'')+(e.real?`<span class="realbadge">真實事件 · ${e.date}</span><br>`:'')+e.x+(e.real?`<div class="source">史實摘要來源：<a href="${e.url}" target="_blank" rel="noopener">${e.src}</a><br>以下選項與數值為遊戲模擬，不代表真實票效。</div>`:'');
+ if(!choices)return;
+ choices.innerHTML='';
+ e.c.forEach(c=>{let x=document.createElement('button');x.className='choice';x.textContent=c[0];x.disabled=S.money<c[2];x.onclick=()=>resolveDecision(c,e,isSudden);choices.appendChild(x)});
+}
 function decisionReason(c,v){let p=[];if(c[3]>=7)p.push('提高曝光與議題聲量');else if(c[3]<=-2)p.push('降低媒體與社群聲量');if(c[4]>=5)p.push('強化好感與信任');else if(c[4]<=-3)p.push('引發部分選民反感');if(c[0].includes('公開')||c[0].includes('更正')||c[0].includes('查核'))p.push('資訊透明降低爭議的不確定性');if(c[0].includes('攻擊')||c[0].includes('反擊')||c[0].includes('堅持'))p.push('強硬攻防增加注意力，但也有反噬風險');if(!p.length)p.push(v>=0?'整體模擬反應略偏正面':'整體模擬反應略偏負面');return p.join('，')+'。'}
 function applyPollImpact(v){let q={a:S.a,b:S.b,c:S.c};
  let oppMove=rnd(1.15)+(Math.random()<.28?Math.random()*1.6:0);
@@ -331,13 +342,11 @@ function customEvent(btn){
   if(oppDelta>.25) impact+=N.opp+'受益 '+oppDelta.toFixed(1)+'%'; else if(oppDelta<-.25) impact+=N.opp+'受損 '+Math.abs(oppDelta).toFixed(1)+'%'; else impact+=N.opp+'幾乎無影響';
   addLog(`<b>第 ${TOTAL_DAYS+1-S.day} 天｜發動事件：${name}</b><br>類型：${type}<br>管道：${ch}<br>花費：${cash(cost)}<br><b>結果：${outcome}</b><br>影響判定：${impact}<br>原因：${why}<br>模擬支持率：${pollLine(before)}`);
   nameEl.value='';
-  render();
   toastMsg('發動完成：'+outcome);
-  setTimeout(()=>{
-    let counter={t:name+'即時攻防',x:'你發動「'+name+'」後，事件立即進入攻防小遊戲。',icon:'⚔️',real:false};
-    rpsBattle(counter);
-    addLog(`<b>第 ${TOTAL_DAYS+1-S.day} 天｜自訂事件攻防</b><br>你發動：${name}<br>請選擇攻防預算，再進行剪刀石頭布或比大小。`);
-  },300);
+  let counter={t:name+'即時攻防',x:'你發動「'+name+'」後，事件立即進入攻防小遊戲。',icon:'⚔️',real:false};
+  rpsBattle(counter);
+  addLog(`<b>第 ${TOTAL_DAYS+1-S.day} 天｜自訂事件攻防</b><br>你發動：${name}<br>請選擇攻防預算，再進行剪刀石頭布或比大小。`);
+  try{render()}catch(renderErr){console.error('render after custom battle',renderErr)}
  }catch(err){alert('發動事件發生錯誤：'+err.message);console.error(err)}finally{if(btn){btn.disabled=false;btn.textContent='發動事件'}}
 }
 function finish(){S.over=true;let vals=[{n:N.me,v:S.a},{n:N.opp,v:S.b}];if(N.third)vals.push({n:N.third,v:S.c});let max=Math.max(...vals.map(x=>x.v)),won=S.a===max&&vals.filter(x=>x.v===max).length===1;eventTitle.textContent=won?'🎉 恭喜當選 '+N.office:'開票夜';eventVisual.innerHTML=won?'<div style="font-size:70px;padding:55px">🎆🏆🎊</div>':sceneFor({t:'民調 開票',x:''});if(won){cheer();fireworks();}eventText.innerHTML=`真正支持度揭曉：<br><b style="color:var(--a)">${N.me} ${S.a.toFixed(1)}%</b>　<b style="color:var(--b)">${N.opp} ${S.b.toFixed(1)}%</b>${N.third?'　<b style="color:#b8a7ff">'+N.third+' '+S.c.toFixed(1)+'%</b>':''}　其他/未決定 ${S.und.toFixed(1)}%<br><br>累計募款 ${cash(S.raised)} · 累計支出 ${cash(S.spent)} · 結餘 ${cash(S.money)}`;choices.innerHTML=`<button class="primary" onclick="setup.style.display='flex'">再玩一次</button>`;truth.classList.remove('hiddenVal');addLog((won?'🎉 模擬結果：'+N.me+'當選 '+N.office+'。':'模擬開票結束。')+' 隱藏支持度公開。');render()}
